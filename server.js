@@ -1,90 +1,76 @@
-let mysql = require('mysql');
-let config = require('./config.js');
-const fetch = require('node-fetch');
+const sql = require('mssql'); // Use mssql instead of mysql
+const config = require('./config.js');
 const express = require("express");
 const path = require("path");
 const bodyParser = require("body-parser");
+const cors = require('cors');  // Import CORS
 
-const { response } = require('express');
-const { Console } = require('console');
 const app = express();
 const port = process.env.PORT || 5000;
 app.use(bodyParser.json({ limit: '50mb' }));
 app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
 
 app.use(express.static(path.join(__dirname, "client/build")));
+app.use(cors());
 
-
-
-app.post('/api/loadUserSettings', (req, res) => {
-
-	let connection = mysql.createConnection(config);
-
-	let userID = req.body.userID;
-
-	let sql = `SELECT mode FROM user WHERE userID = ?`;
-	console.log(sql);
-	let data = [userID];
-	console.log(data);
-
-	connection.query(sql, data, (error, results, fields) => {
-		if (error) {
-			return console.error(error.message);
-		}
-
-		let string = JSON.stringify(results);
-		//let obj = JSON.parse(string);
-		res.send({ express: string });
-	});
-	connection.end();
+// Keep loadUserSettings API
+app.post('/api/loadUserSettings', async (req, res) => {
+  try {
+    const pool = await sql.connect(config);
+    const userID = req.body.userID;
+    const result = await pool.request()
+      .input('userID', sql.Int, userID)
+      .query('SELECT mode FROM [user] WHERE userID = @userID');
+    
+    res.send({ express: JSON.stringify(result.recordset) });
+  } catch (error) {
+    console.error(error);
+    res.status(500).send(error.message);
+  } finally {
+    sql.close();
+  }
 });
 
-app.post('/api/getMovies', (req,res) => {
+// New endpoint to add a document
+app.post('/api/addDocument', async (req, res) => {
+  try {
+    const pool = await sql.connect(config);
+    const { company_name, report_year, document_source_link, user_id, server_location, report_type } = req.body;
+    
+    await pool.request()
+      .input('company_name', sql.VarChar, company_name)
+      .input('report_year', sql.Int, report_year)
+      .input('document_source_link', sql.VarChar, document_source_link)
+      .input('user_id', sql.Int, user_id)
+      .input('server_location', sql.VarChar, server_location)
+      .input('report_type', sql.VarChar, report_type)
+      .query(`
+        INSERT INTO documents (company_name, report_year, document_source_link, user_id, server_location, report_type)
+        VALUES (@company_name, @report_year, @document_source_link, @user_id, @server_location, @report_type)
+      `);
 
-	let connection = mysql.createConnection(config);
-
-	let sql = 'SELECT * FROM movies'
-	console.log(sql);
-	let data = []
-
-	connection.query(sql, data, (error,data) => {
-		if (error) {
-			return res.json({ status : "ERROR", error});
-		}
-		let string = JSON.stringify(data);
-		let obj = JSON.parse(string);
-		res.send({ movieData: obj });
-	});
-	connection.end();
+    res.send({ message: "Document successfully added" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).send(error.message);
+  } finally {
+    sql.close();
+  }
 });
 
-app.post('/api/addReview', (req, res) => {
+// New endpoint to get all documents
+app.get('/api/getDocuments', async (req, res) => {
+  try {
+    const pool = await sql.connect(config);
+    const result = await pool.request().query('SELECT * FROM documents');
+    
+    res.send({ documents: result.recordset });
+  } catch (error) {
+    console.error(error);
+    res.status(500).send(error.message);
+  } finally {
+    sql.close();
+  }
+});
 
-	let connection = mysql.createConnection(config);
-
-	reviewTitle = req.body.reviewTitle,
-	reviewContent = req.body.reviewContent, 
-	reviewScore = req.body.reviewScore, 
-	movieID = req.body.movieID,
-	userID=req.body.userID
-	
-	  
-	let sql = "INSERT INTO `Review` (userID,movieID,reviewTitle,reviewContent,reviewScore) VALUES (?,?,?,?,?)";
-	let data=[userID,movieID,reviewTitle,reviewContent,reviewScore];
-	console.log(sql);
-	console.log(data);       
- 
-	connection.query(sql, data, (error, results, fields) => {
-		if (error) {
-			return console.error(error.message);
-		}
-		res.send({message: "Review successfully added"});
-	 });
-	 connection.end();
- });
- 
-
-
-
-app.listen(port, () => console.log(`Listening on port ${port}`)); //for the dev version
-//app.listen(port, '172.31.31.77'); //for the deployed version, specify the IP address of the server
+app.listen(port, () => console.log(`Listening on port ${port}`));
