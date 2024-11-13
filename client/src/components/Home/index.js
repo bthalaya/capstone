@@ -20,6 +20,8 @@ const Home = () => {
   const [companyName, setCompanyName] = useState('');
   const [reportYear, setReportYear] = useState('');
   const [reportType, setReportType] = useState('');
+  const [documentURL, setDocumentURL] = useState('');
+  const [file, setFile] = useState(null);
   const [documents, setDocuments] = useState([]);
   const [submissionCheck, setSubmissionCheck] = useState(false);
   const userId = 1; // Hardcoded user ID
@@ -41,21 +43,23 @@ const Home = () => {
 
   const handleSubmissionValidation = async (event) => {
     event.preventDefault();
-    if (!companyName || !reportYear || !reportType) {
+    if (!companyName || !reportYear || !reportType || !documentURL || !file) {
       setSubmissionCheck(true);
       return;
     }
-
+    
     const formattedDocumentSource = `${companyName}/${reportYear}/${reportType}.pdf`;
 
     const documentInfo = {
-      companyName,
-      reportYear,
-      reportType,
-      documentSource: formattedDocumentSource,
-      userId,
+      company_name: companyName,
+      report_year: reportYear,
+      report_type: reportType,
+      document_source_link: documentURL, // Use URL provided by user
+      server_location: formattedDocumentSource,
+      user_id: userId,
     };
 
+    // Send document info to the server
     await fetch(serverURL + "/api/addDocument", {
       method: "POST",
       headers: {
@@ -67,6 +71,8 @@ const Home = () => {
     setCompanyName('');
     setReportYear('');
     setReportType('');
+    setDocumentURL('');
+    setFile(null);
     loadDocuments();
     setSubmissionCheck(false);
   };
@@ -92,6 +98,15 @@ const Home = () => {
             <ReportTypeInput
               reportType={reportType}
               setReportType={setReportType}
+              submissionCheck={submissionCheck}
+            />
+            <URLInput
+              documentURL={documentURL}
+              setDocumentURL={setDocumentURL}
+              submissionCheck={submissionCheck}
+            />
+            <FileUpload
+              setFile={setFile}
               submissionCheck={submissionCheck}
             />
             <Button variant="contained" color="primary" type="submit">
@@ -189,6 +204,35 @@ const ReportTypeInput = ({ reportType, setReportType, submissionCheck }) => (
   </div>
 );
 
+const URLInput = ({ documentURL, setDocumentURL, submissionCheck }) => (
+  <div>
+    <TextField
+      label="Document URL"
+      value={documentURL}
+      onChange={(e) => setDocumentURL(e.target.value)}
+      required
+      sx={{ margin: 1 }}
+    />
+    {documentURL === '' && submissionCheck && (
+      <div><em style={{ color: 'red' }}>*Please enter a document URL. It is a mandatory field!</em></div>
+    )}
+  </div>
+);
+
+const FileUpload = ({ file, setFile, submissionCheck }) => (
+  <div>
+    <FormControl fullWidth>
+      <input
+        type="file"
+        id="file-upload"
+        onChange={(e) => setFile(e.target.files[0])}
+        style={{ margin: '8px 0' }}
+      />
+      {submissionCheck && !file && (
+        <FormHelperText error>*Please upload a document. It is a mandatory field!</FormHelperText>
+      )}
+    </FormControl>
+  </div>
+);
+
 export default Home;
-
-

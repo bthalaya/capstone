@@ -62,8 +62,11 @@ app.post('/api/addDocument', async (req, res) => {
 app.get('/api/getDocuments', async (req, res) => {
   try {
     const pool = await sql.connect(config);
-    const result = await pool.request().query('SELECT * FROM documents');
-    
+    const result = await pool.request().query(`
+      SELECT * FROM documents
+      ORDER BY company_name, report_year, report_type
+    `);
+
     res.send({ documents: result.recordset });
   } catch (error) {
     console.error(error);
