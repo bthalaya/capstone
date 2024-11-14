@@ -6,6 +6,7 @@ import {
 } from 'react-router-dom';
 
 import Home from '../Home';
+import Landing from '../Landing';
 import PrivateRoute from '../Navigation/PrivateRoute.js';
 
 
@@ -33,7 +34,8 @@ class App extends Component {
     return (
 	  <Router>
 	    <div>
-        <PrivateRoute exact path="/" component={Home}/>
+        <Route exact path="/" component={Home}/>
+        <Route path="/landing" component={Landing} />
 	    </div>
 	  </Router>
     );
