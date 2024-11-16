@@ -2,8 +2,14 @@ const sql = require('mssql'); // Use mssql instead of mysql
 const config = require('./config.js');
 const express = require("express");
 const path = require("path");
+const formidable = require("formidable");
+const fs = require("fs");
+const { OpenAI } = require('openai');
 const bodyParser = require("body-parser");
 const cors = require('cors');  // Import CORS
+const multer = require("multer");
+const upload = multer({ dest: "uploads/" });
+const FormData = require('form-data');
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -12,6 +18,11 @@ app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
 
 app.use(express.static(path.join(__dirname, "client/build")));
 app.use(cors());
+
+//const openai = new OpenAI({
+  //apiKey: "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", // Make sure your API key is in the .env file
+//});
+
 
 // Keep loadUserSettings API
 app.post('/api/loadUserSettings', async (req, res) => {
@@ -80,7 +91,7 @@ app.get('/api/getTestApiKey', async (req, res) => {
   try {
     const pool = await sql.connect(config);
     const result = await pool.request().query(`
-      SELECT api_key FROM api_keys WHERE service_name = 'Test'
+      SELECT api_key FROM api_keys WHERE service_name = 'OpenAI'
     `);
 
       res.send({ apiKey: result.recordset[0].api_key });
@@ -92,4 +103,83 @@ app.get('/api/getTestApiKey', async (req, res) => {
   }
 });
 
+const openai = new OpenAI({
+  apiKey: "PUT KEY HERE I WILL MAKE THIS BETTER ANOTHER DAY",
+});
+
+
+
+
+
+// File upload and summarization endpoint
+app.post("/upload", upload.single("file"), async (req, res) => {
+  try {
+
+    const assistant = await openai.beta.assistants.create({
+      name: "Financial Analyst Assistant",
+      instructions: "You are an expert assistant, summarize any documents you see",
+      model: "gpt-4o",
+      tools: [{ type: "file_search" }],
+    });
+  
+  
+
+  const aapl10k = await openai.files.create({
+    file: fs.createReadStream("../capstone/beavers1.pdf"),
+    purpose: "assistants",
+  });
+  
+  const thread = await openai.beta.threads.create({
+    messages: [
+      {
+        role: "user",
+        content:
+          "Sumarize the document",
+        // Attach the new file to the message.
+        attachments: [{ file_id: aapl10k.id, tools: [{ type: "file_search" }] }],
+      },
+    ],
+  });
+
+  if (thread && thread.id) {
+    const stream = openai.beta.threads.runs
+      .stream(thread.id, { assistant_id: assistant.id })
+      .on("textCreated", () => console.log("assistant >"))
+      .on("toolCallCreated", (event) => console.log("assistant " + event.type))
+      .on("messageDone", async (event) => {
+        if (event.content[0].type === "text") {
+          const { text } = event.content[0];
+          const { annotations } = text;
+          const citations = [];
+
+          let index = 0;
+          for (let annotation of annotations) {
+            text.value = text.value.replace(annotation.text, "[" + index + "]");
+            const { file_citation } = annotation;
+            if (file_citation && file_citation.file_id) {
+              const citedFile = await openai.files.retrieve(file_citation.file_id);
+              citations.push("[" + index + "]" + citedFile.filename);
+            }
+            index++;
+          }
+
+          console.log(text.value);
+          console.log(citations.join("\n"));
+        }
+      });
+  } else {
+    console.error("Thread ID is missing");
+  }
+
+  } catch (error) {
+    console.error("Error:", error);
+  }
+});
+
+const PORT = process.env.PORT || 5000;
+
 app.listen(port, () => console.log(`Listening on port ${port}`));
+
+
+
+
