@@ -19,11 +19,6 @@ app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
 app.use(express.static(path.join(__dirname, "client/build")));
 app.use(cors());
 
-//const openai = new OpenAI({
-  //apiKey: "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", // Make sure your API key is in the .env file
-//});
-
-
 // Keep loadUserSettings API
 app.post('/api/loadUserSettings', async (req, res) => {
   try {
