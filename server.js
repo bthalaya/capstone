@@ -76,4 +76,20 @@ app.get('/api/getDocuments', async (req, res) => {
   }
 });
 
+app.get('/api/getTestApiKey', async (req, res) => {
+  try {
+    const pool = await sql.connect(config);
+    const result = await pool.request().query(`
+      SELECT api_key FROM api_keys WHERE service_name = 'Test'
+    `);
+
+      res.send({ apiKey: result.recordset[0].api_key });
+  } catch (error) {
+    console.error(error);
+    res.status(500).send(error.message);
+  } finally {
+    sql.close();
+  }
+});
+
 app.listen(port, () => console.log(`Listening on port ${port}`));
