@@ -82,29 +82,9 @@ app.get('/api/getDocuments', async (req, res) => {
   }
 });
 
-app.get('/api/getTestApiKey', async (req, res) => {
-  try {
-    const pool = await sql.connect(config);
-    const result = await pool.request().query(`
-      SELECT api_key FROM api_keys WHERE service_name = 'OpenAI'
-    `);
-
-      res.send({ apiKey: result.recordset[0].api_key });
-  } catch (error) {
-    console.error(error);
-    res.status(500).send(error.message);
-  } finally {
-    sql.close();
-  }
-});
-
-const openai = new OpenAI({
-  apiKey: "PUT KEY HERE I WILL MAKE THIS BETTER ANOTHER DAY",
-});
-
-
-
-
+   const openai = new OpenAI({
+      apiKey: "PUT IT HERE",
+    });
 
 // File upload and summarization endpoint
 app.post("/upload", upload.single("file"), async (req, res) => {
@@ -117,10 +97,10 @@ app.post("/upload", upload.single("file"), async (req, res) => {
       tools: [{ type: "file_search" }],
     });
   
-  
+  const filePath = req.file.path;
 
-  const aapl10k = await openai.files.create({
-    file: fs.createReadStream("../capstone/beavers1.pdf"),
+  const financeDoc = await openai.files.create({
+    file: fs.createReadStream(filePath),
     purpose: "assistants",
   });
   
@@ -130,8 +110,7 @@ app.post("/upload", upload.single("file"), async (req, res) => {
         role: "user",
         content:
           "Sumarize the document",
-        // Attach the new file to the message.
-        attachments: [{ file_id: aapl10k.id, tools: [{ type: "file_search" }] }],
+        attachments: [{ file_id: financeDoc.id, tools: [{ type: "file_search" }] }],
       },
     ],
   });
@@ -174,7 +153,3 @@ app.post("/upload", upload.single("file"), async (req, res) => {
 const PORT = process.env.PORT || 5000;
 
 app.listen(port, () => console.log(`Listening on port ${port}`));
-
-
-
-
