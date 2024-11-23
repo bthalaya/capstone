@@ -1,55 +1,53 @@
 import React, { useState } from 'react';
 
 function Landing() {
-  // State for storing the question and answer
-  const [question, setQuestion] = useState('');
-  const [answer, setAnswer] = useState('');
+  const [file, setFile] = useState(null);
+  const [summary, setSummary] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  // Handle the question input change
-  const handleQuestionChange = (e) => {
-    setQuestion(e.target.value);
+  const handleFileChange = (e) => {
+    setFile(e.target.files[0]);
   };
 
-  // Handle the form submission
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleUpload = async () => {
+    if (!file) {
+      alert("Please select a file first.");
+      return;
+    }
 
-    setAnswer('Loading answer... (this will be replaced by OpenAI API response)');
-    
-    // const response = await fetch('/api/openai', { method: 'POST', body: JSON.stringify({ question }) });
-    // const data = await response.json();
-    // setAnswer(data.answer);  // Assuming the response from OpenAI will have an answer field
+    const formData = new FormData();
+    formData.append("file", file);
+
+    setLoading(true);
+    try {
+      const response = await fetch("http://localhost:5000/upload", {
+        method: "POST",
+        body: formData,
+      });
+      const data = await response.json();
+      setSummary(data.summary);
+    } catch (error) {
+      console.error("Error uploading file:", error);
+      alert("Failed to summarize the file.");
+    }
+    setLoading(false);
   };
 
   return (
-    <div style={{ padding: '20px' }}>
-      <h1>Ask a Question</h1>
-
-      {/* Form for user input */}
-      <form onSubmit={handleSubmit}>
-        <div>
-          <label htmlFor="question">Question:</label>
-          <input
-            type="text"
-            id="question"
-            value={question}
-            onChange={handleQuestionChange}
-            placeholder="Enter your question"
-            style={{ width: '300px', padding: '10px', margin: '10px 0' }}
-          />
-        </div>
-        <button type="submit" style={{ padding: '10px 20px' }}>Submit</button>
-      </form>
-
-      {/* Display the answer here */}
-      {answer && (
-        <div style={{ marginTop: '20px', padding: '10px', border: '1px solid #ccc' }}>
-          <h3>Answer:</h3>
-          <p>{answer}</p>
+    <div style={{ padding: "20px", maxWidth: "500px", margin: "0 auto" }}>
+      <h2>Upload a PDF for Summary</h2>
+      <input type="file" accept="application/pdf" onChange={handleFileChange} />
+      <button onClick={handleUpload} disabled={loading}>
+        {loading ? "Uploading..." : "Summarize"}
+      </button>
+      {summary && (
+        <div style={{ marginTop: "20px" }}>
+          <h3>Summary:</h3>
+          <p>{summary}</p>
         </div>
       )}
     </div>
   );
-}
+};
 
 export default Landing;
