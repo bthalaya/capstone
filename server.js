@@ -83,7 +83,7 @@ app.get('/api/getDocuments', async (req, res) => {
 });
 
    const openai = new OpenAI({
-      apiKey: "PUT IT HERE",
+      apiKey: process.env.REACT_APP_API_KEY,
     });
 
 // File upload and summarization endpoint
