@@ -64,6 +64,35 @@ app.post('/api/addDocument', async (req, res) => {
   }
 });
 
+app.post('/api/checkDocument', async (req, res) => {
+  try {
+    const pool = await sql.connect(config);
+    const { company_name, report_year, report_type } = req.body;
+
+    const result = await pool.request()
+      .input('company_name', sql.VarChar, company_name)
+      .input('report_year', sql.Int, report_year)
+      .input('report_type', sql.VarChar, report_type)
+      .query(`
+        SELECT * FROM documents
+        WHERE company_name = @company_name 
+          AND report_year = @report_year
+          AND report_type = @report_type
+      `);
+
+    if (result.recordset.length > 0) {
+      res.status(200).send({ exists: true, document: result.recordset[0] });
+    } else {
+      res.status(200).send({ exists: false });
+    }
+  } catch (error) {
+    console.error(error);
+    res.status(500).send({ error: "Error checking document in the database." });
+  } finally {
+    sql.close();
+  }
+});
+
 // New endpoint to get all documents
 app.get('/api/getDocuments', async (req, res) => {
   try {
@@ -81,7 +110,7 @@ app.get('/api/getDocuments', async (req, res) => {
     sql.close();
   }
 });
-
+/** 
    const openai = new OpenAI({
       apiKey: process.env.REACT_APP_API_KEY,
     });
@@ -149,7 +178,7 @@ app.post("/upload", upload.single("file"), async (req, res) => {
     console.error("Error:", error);
   }
 });
-
+*/
 const PORT = process.env.PORT || 5000;
 
 app.listen(port, () => console.log(`Listening on port ${port}`));
