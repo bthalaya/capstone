@@ -10,7 +10,7 @@ const cors = require('cors');  // Import CORS
 const multer = require("multer");
 const upload = multer({ dest: "uploads/" });
 const FormData = require('form-data');
-
+require("dotenv").config();
 const app = express();
 const port = process.env.PORT || 5000;
 app.use(bodyParser.json({ limit: '50mb' }));
@@ -82,14 +82,14 @@ app.get('/api/getDocuments', async (req, res) => {
   }
 });
 
-   const openai = new OpenAI({
-      apiKey: process.env.REACT_APP_API_KEY,
-    });
+const openai = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY,
+});
 
 // File upload and summarization endpoint
 app.post("/upload", upload.single("file"), async (req, res) => {
   try {
-
+    console.log("Uploaded file info:", req.file);
     const assistant = await openai.beta.assistants.create({
       name: "Financial Analyst Assistant",
       instructions: "You are an expert assistant, summarize any documents you see",
@@ -97,7 +97,7 @@ app.post("/upload", upload.single("file"), async (req, res) => {
       tools: [{ type: "file_search" }],
     });
   
-  const filePath = req.file.path;
+  const filePath = "C:\\Users\\15195\\Documents\\capstone\\capstone\\beavers.pdf";
 
   const financeDoc = await openai.files.create({
     file: fs.createReadStream(filePath),

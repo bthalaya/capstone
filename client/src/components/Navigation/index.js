@@ -1,14 +1,16 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-
-import SignOutButton from '../SignOut';
 import * as ROUTES from '../../constants/routes';
+import './Navbar.css';
 
-const Navigation = ({ authUser }) => (
-  <div>{authUser ? <NavigationAuth /> : <NavigationNonAuth />}</div>
+const Navigation = () => (
+  <div className="nav-links">
+    <Link to="/landing">Landing</Link>
+    <Link to="">Home</Link>
+  </div>
 );
 
-const NavigationAuth = () => (
+/*const NavigationAuth = () => (
   <ul>
     <li>
       <Link to={ROUTES.LANDING}>Landing</Link>
@@ -34,6 +36,6 @@ const NavigationNonAuth = () => (
       <Link to={ROUTES.SIGN_IN}>Sign In</Link>
     </li>
   </ul>
-);
+);*/
 
 export default Navigation;
