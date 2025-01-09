@@ -238,8 +238,8 @@ app.post('/api/get-file-content', (req, res) => {
   }).connect({
     host: '129.97.25.155',
     port: 22,
-    username: 'a4fyfe',
-    password: '0iLr!G$1',
+    username: process.env.SERVER_USERNAME,
+    password: process.env.SERVER_PASSWORD,
   });
 });
 
