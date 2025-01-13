@@ -1,15 +1,10 @@
-import React, { Component } from 'react';
-import {
-  BrowserRouter as Router,
-  Route,
-  Link,
-} from 'react-router-dom';
+import React, { Component } from "react";
+import { BrowserRouter as Router, Route, Link } from "react-router-dom";
 
-import Home from '../Home';
-import Landing from '../Landing';
-import PrivateRoute from '../Navigation/PrivateRoute.js';
-
-
+import Home from "../Home";
+import Landing from "../Landing";
+import PrivateRoute from "../Navigation/PrivateRoute.js";
+import Navigation from "../Navigation";
 
 class App extends Component {
   constructor(props) {
@@ -24,20 +19,19 @@ class App extends Component {
     //
   }
 
-
   componentWillUnmount() {
     this.listener();
   }
 
-
   render() {
     return (
-	  <Router>
-	    <div>
-        <Route exact path="/" component={Home}/>
-        <Route path="/landing" component={Landing} />
-	    </div>
-	  </Router>
+      <Router>
+        <div>
+          <Navigation></Navigation>
+          <Route exact path="/" component={Home} />
+          <Route path="/landing" component={Landing} />
+        </div>
+      </Router>
     );
   }
 }
