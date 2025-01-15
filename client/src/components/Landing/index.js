@@ -2,6 +2,7 @@ import React, { useState, useEffect} from 'react';
 
 const serverURL = "http://localhost:5000";
 
+import React, { useState } from 'react';
 function Landing() {
   const [companyName, setCompanyName] = useState('');
   const [reportYear, setReportYear] = useState('');
@@ -263,3 +264,4 @@ function Landing() {
 };*/
 
 export default Landing;
+

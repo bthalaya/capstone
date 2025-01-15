@@ -5,12 +5,10 @@ import {
   Link,
 } from 'react-router-dom';
 
-import Home from '../Home';
-import Landing from '../Landing';
-import PrivateRoute from '../Navigation/PrivateRoute.js';
-import Navigation from '../Navigation';
-
-
+import Home from "../Home";
+import Landing from "../Landing";
+import PrivateRoute from "../Navigation/PrivateRoute.js";
+import Navigation from "../Navigation";
 
 class App extends Component {
   constructor(props) {
@@ -25,11 +23,9 @@ class App extends Component {
     //
   }
 
-
   componentWillUnmount() {
     this.listener();
   }
-
 
   render() {
     return (
