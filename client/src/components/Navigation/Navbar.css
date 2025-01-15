@@ -1,43 +1,42 @@
 /* src/components/Navbar.css */
 .navbar {
-    position: fixed; /* Fix the navbar to the left of the screen */
-    top: 0;
-    left: 0;
-    height: 100%; /* Take full height of the viewport */
-    width: 200px;  /* Adjust this width based on your preference */
-    background-color: #333;
-    padding-top: 20px;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    padding-left: 10px;
-    z-index: 1000; /* Ensure it's on top of the content */
-  }
-  
-  .nav-links {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    padding-left: 0;
-    margin: 0;
-  }
-  
-  .navbar a {
-    color: white;
-    text-decoration: none;
-    font-size: 18px;
-    margin-bottom: 20px;
-  }
-  
-  .navbar a:hover {
-    background-color: #575757;
-    padding: 10px;
-    border-radius: 4px;
-  }
-  
-  /* This will push the content on the page to the right */
-  body {
-    margin-left: 200px; /* Match this with the width of the navbar */
-    padding: 20px;
-  }
-  
+  position: fixed; /* Fix the navbar to the left of the screen */
+  top: 0;
+  left: 0;
+  height: 100%; /* Take full height of the viewport */
+  width: 200px; /* Adjust this width based on your preference */
+  background-color: #333;
+  padding-top: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding-left: 10px;
+  z-index: 1000; /* Ensure it's on top of the content */
+}
+
+.nav-links {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding-left: 0;
+  margin: 0;
+}
+
+.navbar a {
+  color: white;
+  text-decoration: none;
+  font-size: 18px;
+  margin-bottom: 20px;
+}
+
+.navbar a:hover {
+  background-color: #575757;
+  padding: 10px;
+  border-radius: 4px;
+}
+
+/* This will push the content on the page to the right */
+body {
+  margin-left: 200px; /* Match this with the width of the navbar */
+  padding: 20px;
+}

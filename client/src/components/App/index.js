@@ -11,7 +11,6 @@ import PrivateRoute from '../Navigation/PrivateRoute.js';
 import Navigation from '../Navigation';
 
 
-
 class App extends Component {
   constructor(props) {
     super(props);
@@ -25,11 +24,9 @@ class App extends Component {
     //
   }
 
-
   componentWillUnmount() {
     this.listener();
   }
-
 
   render() {
     return (
