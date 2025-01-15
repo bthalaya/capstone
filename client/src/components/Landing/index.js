@@ -1,4 +1,4 @@
-/** 
+
 import React, { useState } from 'react';
 function Landing() {
   const [file, setFile] = useState(null);
@@ -52,4 +52,3 @@ function Landing() {
 
 export default Landing;
 
-*/
