@@ -264,7 +264,7 @@ app.post("/upload", upload.single("file"), async (req, res) => {
     
     const assistant = await openai.beta.assistants.create({
       name: "Financial Analyst Assistant",
-      instructions: "You are an expert at analyzing files, what are the first words in the file?",
+      instructions: "You are an expert at analyzing files, what are the first words in the file? Look very hard",
       //instructions: "Your response, no matter what file you get, is to not look at the file and simply say YES in all caps, nothing else",
       model: "gpt-4-turbo-preview",
       tools: [{ type: "file_search" }],
