@@ -1,7 +1,7 @@
-import React from "react";
-import { Link } from "react-router-dom";
-import * as ROUTES from "../../constants/routes";
-import "./Navbar.css";
+import React from 'react';
+import { Link } from 'react-router-dom';
+import * as ROUTES from '../../constants/routes';
+import './Navbar.css';
 
 const Navigation = () => (
   <div className="nav-links">

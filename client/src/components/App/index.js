@@ -1,5 +1,9 @@
-import React, { Component } from "react";
-import { BrowserRouter as Router, Route, Link } from "react-router-dom";
+import React, { Component } from 'react';
+import {
+  BrowserRouter as Router,
+  Route,
+  Link,
+} from 'react-router-dom';
 
 import Home from "../Home";
 import Landing from "../Landing";
@@ -25,13 +29,13 @@ class App extends Component {
 
   render() {
     return (
-      <Router>
-        <div>
-          <Navigation></Navigation>
-          <Route exact path="/" component={Home} />
-          <Route path="/landing" component={Landing} />
-        </div>
-      </Router>
+	  <Router>
+	    <div>
+        <Navigation></Navigation>
+        <Route exact path="/" component={Home}/>
+        <Route path="/landing" component={Landing} />
+	    </div>
+	  </Router>
     );
   }
 }
