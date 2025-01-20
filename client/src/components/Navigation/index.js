@@ -1,11 +1,11 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
-import * as ROUTES from '../../constants/routes';
-import './Navbar.css';
+import React from "react";
+import { Link } from "react-router-dom";
+import * as ROUTES from "../../constants/routes";
+import "./Navbar.css";
 
 const Navigation = () => (
   <div className="nav-links">
-    <Link to="/landing">Landing</Link>
+    <Link to="/landing">Landingg</Link>
     <Link to="">Home</Link>
   </div>
 );
