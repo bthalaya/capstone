@@ -17,7 +17,12 @@ const lightTheme = createTheme({
 });
 
 const Dashboard = () => {
-    
+  return (
+    <div>
+      <h1>Dashboard</h1>
+      <p>Welcome to your dashboard! Here’s where you can manage your data and see insights.</p>
+    </div>
+  );
 }
 
 export default Dashboard;

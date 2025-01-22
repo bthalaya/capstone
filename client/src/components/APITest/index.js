@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 
 const serverURL = "http://localhost:5000";
 
-function Landing() {
+function APITest() {
   const [companyName, setCompanyName] = useState("");
   const [reportYear, setReportYear] = useState("");
   const [reportType, setReportType] = useState("");
@@ -273,4 +273,4 @@ function Landing() {
   );
 };*/
 
-export default Landing;
+export default APITest;

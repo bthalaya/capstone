@@ -16,12 +16,13 @@ const lightTheme = createTheme({
   },
 });
 
-const Home = () => {
+const Help = () => {
   return (
     <div>
-      <h1>Welcome to EcoScan!</h1>
+      <h1>Help</h1>
+      <p></p>
     </div>
   );
 }
 
-export default Home;
+export default Help;
