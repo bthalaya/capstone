@@ -1,41 +1,89 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import * as ROUTES from "../../constants/routes";
+import { AppBar, Toolbar, Button } from "@mui/material";
 import "./Navbar.css";
 
-const Navigation = () => (
-  <div className="nav-links">
-    <Link to="/landing">Landingg</Link>
-    <Link to="">Home</Link>
-  </div>
-);
-
-/*const NavigationAuth = () => (
-  <ul>
-    <li>
-      <Link to={ROUTES.LANDING}>Landing</Link>
-    </li>
-    <li>
-      <Link to={ROUTES.HOME}>Home</Link>
-    </li>
-    <li>
-      <Link to={ROUTES.ACCOUNT}>Account</Link>
-    </li>
-    <li>
-      <SignOutButton />
-    </li>
-  </ul>
-);
-
-const NavigationNonAuth = () => (
-  <ul>
-    <li>
-      <Link to={ROUTES.LANDING}>Landing</Link>
-    </li>
-    <li>
-      <Link to={ROUTES.SIGN_IN}>Sign In</Link>
-    </li>
-  </ul>
-);*/
+const Navigation = () => {
+  return (
+    <AppBar position="static" style={{ backgroundColor: "#558B2F" }}>
+      <Toolbar>
+        {/* Navigation Links */}
+        <Button
+          color="inherit"
+          component={Link}
+          to="/"
+          sx={{
+            '&:hover': {
+              backgroundColor: '#7F9E50',
+            },
+          }}
+        >
+          Home
+        </Button>
+        <Button
+          color="inherit"
+          component={Link}
+          to="/managefiles"
+          sx={{
+            '&:hover': {
+              backgroundColor: '#7F9E50',
+            },
+          }}
+        >
+          Manage Files
+        </Button>
+        <Button
+          color="inherit"
+          component={Link}
+          to="/dashboard"
+          sx={{
+            '&:hover': {
+              backgroundColor: '#7F9E50',
+            },
+          }}
+        >
+          Dashboard
+        </Button>
+        <Button
+          color="inherit"
+          component={Link}
+          to="/help"
+          sx={{
+            '&:hover': {
+              backgroundColor: '#7F9E50',
+            },
+          }}
+        >
+          Help
+        </Button>
+        <Button
+          color="inherit"
+          component={Link}
+          to="/APITest"
+          sx={{
+            '&:hover': {
+              backgroundColor: '#7F9E50',
+            },
+          }}
+        >
+          API Test
+        </Button>
+        <Button
+          color="inherit"
+          component={Link}
+          to="/about"
+          sx={{
+            '&:hover': {
+              backgroundColor: '#7F9E50',
+            },
+          }}
+        >
+          About
+        </Button>
+      </Toolbar>
+    </AppBar>
+  );
+};
 
 export default Navigation;
+
