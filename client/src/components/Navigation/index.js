@@ -1,28 +1,12 @@
-import React from 'react';
-import AppBar from '@mui/material/AppBar';
-import Toolbar from '@mui/material/Toolbar';
-import Typography from '@mui/material/Typography';
-import Button from '@mui/material/Button';
-import { Link } from 'react-router-dom';
+import React from "react";
+import { Link } from "react-router-dom";
+import { AppBar, Toolbar, Button } from "@mui/material";
+import "./Navbar.css";
 
 const Navigation = () => {
   return (
-    <AppBar position="static" sx={{ backgroundColor: '#9BBB70', padding: '0.5rem 0' }}>
+    <AppBar position="static" style={{ backgroundColor: "#558B2F" }}>
       <Toolbar>
-        {/* App Title */}
-        <Typography
-          variant="h6"
-          component="div"
-          sx={{
-            flexGrow: 1,
-            fontWeight: 'bold',
-            textDecoration: 'none',
-            color: 'inherit',
-          }}
-        >
-          EcoScan
-        </Typography>
-
         {/* Navigation Links */}
         <Button
           color="inherit"
@@ -102,3 +86,4 @@ const Navigation = () => {
 };
 
 export default Navigation;
+
