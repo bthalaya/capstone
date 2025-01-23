@@ -1,34 +1,124 @@
-import React, { useState, useEffect } from 'react';
-import { Box, Typography, FormControl, Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Select, MenuItem, InputLabel, TextField, FormHelperText, Grid, FormLabel } from '@mui/material';
-import { createTheme, ThemeProvider } from '@mui/material/styles';
+import React, { useState, useEffect } from "react";
+import {
+  Box,
+  Typography,
+  FormControl,
+  Button,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
+  Select,
+  MenuItem,
+  InputLabel,
+  TextField,
+  FormHelperText,
+  Grid,
+  FormLabel,
+} from "@mui/material";
+import { createTheme, ThemeProvider } from "@mui/material/styles";
+import { initializeApp } from "firebase/app";
+import { getStorage } from "firebase/storage";
 
 const serverURL = "http://localhost:5000"; // Your server URL
 
 const lightTheme = createTheme({
   palette: {
-    mode: 'light',
+    mode: "light",
     background: {
-      default: "#ffffff"
+      default: "#ffffff",
     },
     primary: {
-      main: '#ef9a9a',
+      main: "#ef9a9a",
     },
   },
 });
 
+// Initialize Firebase
+const firebaseConfig = {
+  apiKey: "AIzaSyCY2m9iLW6ETIHvSOK97cEGSo2XztfGmCY",
+  authDomain: "capstone-bca8d.firebaseapp.com",
+  projectId: "capstone-bca8d",
+  storageBucket: "capstone-bca8d.firebasestorage.app",
+  messagingSenderId: "508859134976",
+  appId: "1:508859134976:web:df989b9e6e64252a7ed4e5",
+};
+
+const app = initializeApp(firebaseConfig);
+
+const storage = getStorage(app);
+const FileUpload = ({ file, setFile, setDocumentURL, submissionCheck }) => {
+  const handleFileUpload = async (fileToUpload) => {
+    const formData = new FormData();
+    formData.append("file", fileToUpload);
+
+    console.log("File Name:", fileToUpload.name); // Log the file name
+    console.log("File Size:", fileToUpload.size, "bytes"); // Log the file size
+    console.log("File Type:", fileToUpload.type); // Log the file type
+
+    try {
+      const response = await fetch("http://localhost:5000/upload", {
+        method: "POST",
+        body: formData,
+      });
+      const data = await response.json();
+      console.log("Response Data:", data);
+
+      // Assuming 'data' includes a URL or some other relevant info
+      if (data.url) {
+        setDocumentURL(data.url); // Update the document URL in your state
+      }
+    } catch (error) {
+      console.error("Upload error:", error);
+    }
+  };
+
+  const handleFileChange = (event) => {
+    const selectedFile = event.target.files[0]; // Correctly handle the file object
+    setFile(selectedFile); // Update the file in your state
+    if (selectedFile) {
+      handleFileUpload(selectedFile); // Pass the correct file object to the upload handler
+    }
+  };
+
+  return (
+    <div>
+      <FormLabel htmlFor="file-upload" sx={{ marginBottom: 1 }}>
+        File Upload
+      </FormLabel>
+      <input
+        type="file"
+        id="file-upload"
+        onChange={handleFileChange} // Trigger file upload onChange
+        required
+      />
+      {!file && submissionCheck && (
+        <div>
+          <em style={{ color: "red" }}>
+            *Please upload a file. It is a mandatory field!
+          </em>
+        </div>
+      )}
+    </div>
+  );
+};
+
 const Home = () => {
-  const [companyName, setCompanyName] = useState('');
-  const [reportYear, setReportYear] = useState('');
-  const [reportType, setReportType] = useState('');
-  const [documentURL, setDocumentURL] = useState('');
+  const [companyName, setCompanyName] = useState("");
+  const [reportYear, setReportYear] = useState("");
+  const [reportType, setReportType] = useState("");
+  const [documentURL, setDocumentURL] = useState("");
   const [file, setFile] = useState(null);
   const [documents, setDocuments] = useState([]);
   const [filteredDocuments, setFilteredDocuments] = useState([]);
   const [submissionCheck, setSubmissionCheck] = useState(false);
-  const [companyFilter, setCompanyFilter] = useState('');
-  const [yearFilter, setYearFilter] = useState('');
-  const [typeFilter, setTypeFilter] = useState('');
-  const [searchText, setSearchText] = useState('');
+  const [companyFilter, setCompanyFilter] = useState("");
+  const [yearFilter, setYearFilter] = useState("");
+  const [typeFilter, setTypeFilter] = useState("");
+  const [searchText, setSearchText] = useState("");
   const userId = 1; // Hardcoded user ID
 
   useEffect(() => {
@@ -52,24 +142,31 @@ const Home = () => {
 
   const filterDocuments = () => {
     let filtered = [...documents];
-    
+
     if (companyFilter) {
-      filtered = filtered.filter(doc => doc.company_name.toLowerCase().includes(companyFilter.toLowerCase()));
+      filtered = filtered.filter((doc) =>
+        doc.company_name.toLowerCase().includes(companyFilter.toLowerCase())
+      );
     }
-    
+
     if (yearFilter) {
-      filtered = filtered.filter(doc => doc.report_year.toString().includes(yearFilter));
+      filtered = filtered.filter((doc) =>
+        doc.report_year.toString().includes(yearFilter)
+      );
     }
-    
+
     if (typeFilter) {
-      filtered = filtered.filter(doc => doc.report_type.toLowerCase().includes(typeFilter.toLowerCase()));
+      filtered = filtered.filter((doc) =>
+        doc.report_type.toLowerCase().includes(typeFilter.toLowerCase())
+      );
     }
-    
+
     if (searchText) {
-      filtered = filtered.filter(doc => 
-        doc.company_name.toLowerCase().includes(searchText.toLowerCase()) ||
-        doc.report_year.toString().includes(searchText) ||
-        doc.report_type.toLowerCase().includes(searchText.toLowerCase())
+      filtered = filtered.filter(
+        (doc) =>
+          doc.company_name.toLowerCase().includes(searchText.toLowerCase()) ||
+          doc.report_year.toString().includes(searchText) ||
+          doc.report_type.toLowerCase().includes(searchText.toLowerCase())
       );
     }
 
@@ -80,6 +177,7 @@ const Home = () => {
     event.preventDefault();
     if (!companyName || !reportYear || !reportType || !documentURL || !file) {
       setSubmissionCheck(true);
+      console.log("Submission failed. Missing required fields.");
       return;
     }
 
@@ -97,6 +195,7 @@ const Home = () => {
     });
 
     const checkData = await checkResponse.json();
+    console.log("Response from /api/checkDocument:", checkData);
 
     if (checkData.exists) {
       alert(`This document already exists in the system: 
@@ -124,10 +223,10 @@ const Home = () => {
         body: JSON.stringify(documentInfo),
       });
     }
-    setCompanyName('');
-    setReportYear('');
-    setReportType('');
-    setDocumentURL('');
+    setCompanyName("");
+    setReportYear("");
+    setReportType("");
+    setDocumentURL("");
     setFile(null);
     loadDocuments();
     setSubmissionCheck(false);
@@ -172,12 +271,19 @@ const Home = () => {
               </Grid>
               <Grid item xs={12}>
                 <FileUpload
-                  setFile={setFile}
-                  submissionCheck={submissionCheck}
+                  file={file} // Pass file state here
+                  setFile={setFile} // Pass setFile to update the file
+                  setDocumentURL={setDocumentURL} // Pass setDocumentURL for file URL
+                  submissionCheck={submissionCheck} // Pass submissionCheck to show error messages
                 />
               </Grid>
             </Grid>
-            <Button variant="contained" color="primary" type="submit" sx={{ marginTop: 2 }}>
+            <Button
+              variant="contained"
+              color="primary"
+              type="submit"
+              sx={{ marginTop: 2 }}
+            >
               Submit
             </Button>
           </form>
@@ -243,7 +349,8 @@ const Home = () => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {Array.isArray(filteredDocuments) && filteredDocuments.length > 0 ? (
+              {Array.isArray(filteredDocuments) &&
+              filteredDocuments.length > 0 ? (
                 filteredDocuments.map((doc) => (
                   <TableRow key={doc.document_id}>
                     <TableCell>{doc.company_name}</TableCell>
@@ -264,26 +371,31 @@ const Home = () => {
   );
 };
 
+export default Home;
+
 const CompanySelection = ({ companyName, setCompanyName, submissionCheck }) => {
   const [focus, setFocus] = useState(false); // Track focus state
 
   return (
     <div>
-      <FormLabel htmlFor="company-select" sx={{ marginBottom: 1 }}>Company Name</FormLabel>
+      <FormLabel htmlFor="company-select" sx={{ marginBottom: 1 }}>
+        Company Name
+      </FormLabel>
       <Select
         labelId="company-select-label"
         id="company-select"
         value={companyName}
         onChange={(e) => setCompanyName(e.target.value)}
         onFocus={() => setFocus(true)} // Set focus onSelect
-        onBlur={() => setFocus(false)}  // Remove focus onBlur
+        onBlur={() => setFocus(false)} // Remove focus onBlur
         sx={{
-          width: '100%',
-          borderColor: submissionCheck && companyName === '' ? 'red' : 'inherit',
-          '&.Mui-focused': {
-            borderColor: 'blue', // Add custom color when focused
+          width: "100%",
+          borderColor:
+            submissionCheck && companyName === "" ? "red" : "inherit",
+          "&.Mui-focused": {
+            borderColor: "blue", // Add custom color when focused
           },
-          outline: focus ? '2px solid blue' : 'none', // Manage focus outline
+          outline: focus ? "2px solid blue" : "none", // Manage focus outline
         }}
       >
         <MenuItem value="BP">BP</MenuItem>
@@ -297,8 +409,10 @@ const CompanySelection = ({ companyName, setCompanyName, submissionCheck }) => {
         <MenuItem value="TotalEnergies">TotalEnergies</MenuItem>
         <MenuItem value="Wintershall">Wintershall</MenuItem>
       </Select>
-      <FormHelperText error={submissionCheck && companyName === ''}>
-        {submissionCheck && companyName === '' ? '*Please select a company. It is a mandatory field!' : 'Select a company'}
+      <FormHelperText error={submissionCheck && companyName === ""}>
+        {submissionCheck && companyName === ""
+          ? "*Please select a company. It is a mandatory field!"
+          : "Select a company"}
       </FormHelperText>
     </div>
   );
@@ -306,17 +420,23 @@ const CompanySelection = ({ companyName, setCompanyName, submissionCheck }) => {
 
 const ReportYearInput = ({ reportYear, setReportYear, submissionCheck }) => (
   <div>
-    <FormLabel htmlFor="report-year" sx={{ marginBottom: 1 }}>Report Year</FormLabel>
+    <FormLabel htmlFor="report-year" sx={{ marginBottom: 1 }}>
+      Report Year
+    </FormLabel>
     <TextField
       id="report-year"
       label="Report Year"
       value={reportYear}
       onChange={(e) => setReportYear(e.target.value)}
       required
-      sx={{ width: '100%' }}
+      sx={{ width: "100%" }}
     />
-    {reportYear === '' && submissionCheck && (
-      <div><em style={{ color: 'red' }}>*Please enter a report year. It is a mandatory field!</em></div>
+    {reportYear === "" && submissionCheck && (
+      <div>
+        <em style={{ color: "red" }}>
+          *Please enter a report year. It is a mandatory field!
+        </em>
+      </div>
     )}
   </div>
 );
@@ -326,21 +446,23 @@ const ReportTypeInput = ({ reportType, setReportType, submissionCheck }) => {
 
   return (
     <div>
-      <FormLabel htmlFor="report-select" sx={{ marginBottom: 1 }}>Report Name</FormLabel>
+      <FormLabel htmlFor="report-select" sx={{ marginBottom: 1 }}>
+        Report Name
+      </FormLabel>
       <Select
         labelId="report-select-label"
         id="report-select"
         value={reportType}
         onChange={(e) => setReportType(e.target.value)}
         onFocus={() => setFocus(true)} // Set focus onSelect
-        onBlur={() => setFocus(false)}  // Remove focus onBlur
+        onBlur={() => setFocus(false)} // Remove focus onBlur
         sx={{
-          width: '100%',
-          borderColor: submissionCheck && reportType === '' ? 'red' : 'inherit',
-          '&.Mui-focused': {
-            borderColor: 'blue', // Add custom color when focused
+          width: "100%",
+          borderColor: submissionCheck && reportType === "" ? "red" : "inherit",
+          "&.Mui-focused": {
+            borderColor: "blue", // Add custom color when focused
           },
-          outline: focus ? '2px solid blue' : 'none', // Manage focus outline
+          outline: focus ? "2px solid blue" : "none", // Manage focus outline
         }}
       >
         <MenuItem value="Factbook">Factbook</MenuItem>
@@ -348,14 +470,22 @@ const ReportTypeInput = ({ reportType, setReportType, submissionCheck }) => {
         <MenuItem value="Progress Report">Progress Report</MenuItem>
         <MenuItem value="URD">URD</MenuItem>
         <MenuItem value="CDP">CDP</MenuItem>
-        <MenuItem value="Annual Report & Form 20">Annual Report & Form 20</MenuItem>
+        <MenuItem value="Annual Report & Form 20">
+          Annual Report & Form 20
+        </MenuItem>
         <MenuItem value="Sustainability Report">Sustainability Report</MenuItem>
-        <MenuItem value="Advancing The Energy Transition">Advancing The Energy Transition</MenuItem>
+        <MenuItem value="Advancing The Energy Transition">
+          Advancing The Energy Transition
+        </MenuItem>
         <MenuItem value="ESG Datasheet">ESG Datasheet</MenuItem>
         <MenuItem value="Net Zero Report">Net Zero Report</MenuItem>
-        <MenuItem value="Sustainability Performance">Sustainability Performance</MenuItem>
+        <MenuItem value="Sustainability Performance">
+          Sustainability Performance
+        </MenuItem>
         <MenuItem value="Annual Report">Annual Report</MenuItem>
-        <MenuItem value="Path to Decarbonization">Path to Decarbonization</MenuItem>
+        <MenuItem value="Path to Decarbonization">
+          Path to Decarbonization
+        </MenuItem>
         <MenuItem value="Carbon Neutrality">Carbon Neutrality</MenuItem>
         <MenuItem value="Just Transition">Just Transition</MenuItem>
         <MenuItem value="Climate Review">Climate Review</MenuItem>
@@ -365,8 +495,10 @@ const ReportTypeInput = ({ reportType, setReportType, submissionCheck }) => {
         <MenuItem value="Financial Report">Financial Report</MenuItem>
         <MenuItem value="ESG Report">ESG Report</MenuItem>
       </Select>
-      <FormHelperText error={submissionCheck && reportType === ''}>
-        {submissionCheck && reportType === '' ? '*Please select a report type. It is a mandatory field!' : 'Select a report type'}
+      <FormHelperText error={submissionCheck && reportType === ""}>
+        {submissionCheck && reportType === ""
+          ? "*Please select a report type. It is a mandatory field!"
+          : "Select a report type"}
       </FormHelperText>
     </div>
   );
@@ -374,38 +506,23 @@ const ReportTypeInput = ({ reportType, setReportType, submissionCheck }) => {
 
 const URLInput = ({ documentURL, setDocumentURL, submissionCheck }) => (
   <div>
-    <FormLabel htmlFor="url" sx={{ marginBottom: 1 }}>Document URL</FormLabel>
+    <FormLabel htmlFor="url" sx={{ marginBottom: 1 }}>
+      Document URL
+    </FormLabel>
     <TextField
       id="url"
       label="Document URL"
       value={documentURL}
       onChange={(e) => setDocumentURL(e.target.value)}
       required
-      sx={{ width: '100%' }}
+      sx={{ width: "100%" }}
     />
-    {documentURL === '' && submissionCheck && (
-      <div><em style={{ color: 'red' }}>*Please enter a document URL. It is a mandatory field!</em></div>
+    {documentURL === "" && submissionCheck && (
+      <div>
+        <em style={{ color: "red" }}>
+          *Please enter a document URL. It is a mandatory field!
+        </em>
+      </div>
     )}
   </div>
 );
-
-const FileUpload = ({ file, setFile, submissionCheck }) => (
-  <div>
-    <FormLabel htmlFor="file-upload" sx={{ marginBottom: 1 }}>File Upload</FormLabel>
-    <input
-      type="file"
-      id="file-upload"
-      onChange={(e) => setFile(e.target.files[0])}
-      required
-    />
-    {!file && submissionCheck && (
-      <div><em style={{ color: 'red' }}>*Please upload a file. It is a mandatory field!</em></div>
-    )}
-  </div>
-);
-
-export default Home;
-
-
-
-
