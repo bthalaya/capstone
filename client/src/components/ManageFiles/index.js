@@ -1,41 +1,15 @@
-import React, { useState, useEffect } from "react";
-import {
-  Box,
-  Typography,
-  FormControl,
-  Button,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
-  Select,
-  MenuItem,
-  InputLabel,
-  TextField,
-  FormHelperText,
-  Grid,
-  FormLabel,
-} from "@mui/material";
-import { createTheme, ThemeProvider } from "@mui/material/styles";
+import React, {useState} from "react";
+import {  InputAdornment, TextField, Button, MenuItem, Select, FormControl, InputLabel} from "@mui/material";
+import {  Dialog, DialogActions, DialogContent, DialogTitle } from "@mui/material";
+import { Search, ArrowDropDown, ArrowDropUp, } from "@mui/icons-material";
+import { CloudUpload } from "@mui/icons-material";
 import { initializeApp } from "firebase/app";
-import { getStorage } from "firebase/storage";
+import { Notifications, Settings, AccountCircle } from "@mui/icons-material";
+import { Typography } from '@mui/material';
+import { createTheme, ThemeProvider } from '@mui/material/styles';
+import "@fontsource/lato";  // Ensure this is added
 
 const serverURL = "http://localhost:5000"; // Your server URL
-
-const lightTheme = createTheme({
-  palette: {
-    mode: "light",
-    background: {
-      default: "#ffffff",
-    },
-    primary: {
-      main: "#ef9a9a",
-    },
-  },
-});
 
 // Initialize Firebase
 const firebaseConfig = {
@@ -49,480 +23,269 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 
-const storage = getStorage(app);
-const FileUpload = ({ file, setFile, setDocumentURL, submissionCheck }) => {
-  const handleFileUpload = async (fileToUpload) => {
-    const formData = new FormData();
-    formData.append("file", fileToUpload);
-
-    console.log("File Name:", fileToUpload.name); // Log the file name
-    console.log("File Size:", fileToUpload.size, "bytes"); // Log the file size
-    console.log("File Type:", fileToUpload.type); // Log the file type
-
-    try {
-      const response = await fetch("http://localhost:5000/upload", {
-        method: "POST",
-        body: formData,
-      });
-      const data = await response.json();
-      console.log("Response Data:", data);
-
-      // Assuming 'data' includes a URL or some other relevant info
-      if (data.url) {
-        setDocumentURL(data.url); // Update the document URL in your state
-      }
-    } catch (error) {
-      console.error("Upload error:", error);
-    }
-  };
-
-  const handleFileChange = (event) => {
-    const selectedFile = event.target.files[0]; // Correctly handle the file object
-    setFile(selectedFile); // Update the file in your state
-    if (selectedFile) {
-      handleFileUpload(selectedFile); // Pass the correct file object to the upload handler
-    }
-  };
-
-  return (
-    <div>
-      <FormLabel htmlFor="file-upload" sx={{ marginBottom: 1 }}>
-        File Upload
-      </FormLabel>
-      <input
-        type="file"
-        id="file-upload"
-        onChange={handleFileChange} // Trigger file upload onChange
-        required
-      />
-      {!file && submissionCheck && (
-        <div>
-          <em style={{ color: "red" }}>
-            *Please upload a file. It is a mandatory field!
-          </em>
-        </div>
-      )}
-    </div>
-  );
-};
 
 const ManageFiles = () => {
-  const [companyName, setCompanyName] = useState("");
-  const [reportYear, setReportYear] = useState("");
-  const [reportType, setReportType] = useState("");
-  const [documentURL, setDocumentURL] = useState("");
-  const [file, setFile] = useState(null);
-  const [documents, setDocuments] = useState([]);
-  const [filteredDocuments, setFilteredDocuments] = useState([]);
-  const [submissionCheck, setSubmissionCheck] = useState(false);
-  const [companyFilter, setCompanyFilter] = useState("");
-  const [yearFilter, setYearFilter] = useState("");
-  const [typeFilter, setTypeFilter] = useState("");
-  const [searchText, setSearchText] = useState("");
-  const userId = 1; // Hardcoded user ID
+  const [sortColumn, setSortColumn] = useState(null); // Track which column is being sorted
+  const [sortDirection, setSortDirection] = useState("asc"); // Track sorting direction
+  const [data, setData] = useState([
+    { name: "BP", year: 2022, type: "Annual Report", date: "Dec 13, 2022" },
+    { name: "Shell", year: 2022, type: "Sustainability Report", date: "Dec 12, 2022" },
+    { name: "Exxon", year: 2021, type: "Financial Report", date: "Jan 8, 2022" },
+    { name: "Chevron", year: 2023, type: "Annual Report", date: "Oct 22, 2023" },
+  ]);
 
-  useEffect(() => {
-    loadDocuments();
-  }, []);
+  const [openDialog, setOpenDialog] = useState(false); // For the popup
+  const [companyName, setCompanyName] = useState('');
+  const [reportYear, setReportYear] = useState('');
+  const [reportName, setReportName] = useState('');
+  const [documentURL, setDocumentURL] = useState('');
+  const [file, setFile] = useState(null); // File upload state
 
-  useEffect(() => {
-    filterDocuments();
-  }, [documents, companyFilter, yearFilter, typeFilter, searchText]);
+  const handleDialogOpen = () => setOpenDialog(true);
+  const handleDialogClose = () => setOpenDialog(false);
 
-  const loadDocuments = async () => {
-    const response = await fetch(serverURL + "/api/getDocuments", {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
-    const data = await response.json();
-    setDocuments(data.documents);
+  const handleSubmit = () => {
+    // Handle the form submission logic here (e.g., sending data to server)
+    console.log("Form submitted", { companyName, reportYear, reportName, documentURL, file });
+    setOpenDialog(false);
   };
 
-  const filterDocuments = () => {
-    let filtered = [...documents];
+  const handleSort = (column) => {
+    // Set the sorting direction
+    const newDirection = sortColumn === column && sortDirection === "asc" ? "desc" : "asc";
+    setSortColumn(column);
+    setSortDirection(newDirection);
 
-    if (companyFilter) {
-      filtered = filtered.filter((doc) =>
-        doc.company_name.toLowerCase().includes(companyFilter.toLowerCase())
-      );
-    }
-
-    if (yearFilter) {
-      filtered = filtered.filter((doc) =>
-        doc.report_year.toString().includes(yearFilter)
-      );
-    }
-
-    if (typeFilter) {
-      filtered = filtered.filter((doc) =>
-        doc.report_type.toLowerCase().includes(typeFilter.toLowerCase())
-      );
-    }
-
-    if (searchText) {
-      filtered = filtered.filter(
-        (doc) =>
-          doc.company_name.toLowerCase().includes(searchText.toLowerCase()) ||
-          doc.report_year.toString().includes(searchText) ||
-          doc.report_type.toLowerCase().includes(searchText.toLowerCase())
-      );
-    }
-
-    setFilteredDocuments(filtered);
-  };
-
-  const handleSubmissionValidation = async (event) => {
-    event.preventDefault();
-    if (!companyName || !reportYear || !reportType || !documentURL || !file) {
-      setSubmissionCheck(true);
-      console.log("Submission failed. Missing required fields.");
-      return;
-    }
-
-    // Check if the document exists in the system
-    const checkResponse = await fetch(serverURL + "/api/checkDocument", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        company_name: companyName,
-        report_year: reportYear,
-        report_type: reportType,
-      }),
+    // Sort the data
+    const sortedData = [...data].sort((a, b) => {
+      if (a[column] < b[column]) return newDirection === "asc" ? -1 : 1;
+      if (a[column] > b[column]) return newDirection === "asc" ? 1 : -1;
+      return 0;
     });
 
-    const checkData = await checkResponse.json();
-    console.log("Response from /api/checkDocument:", checkData);
+    setData(sortedData);
+  };
 
-    if (checkData.exists) {
-      alert(`This document already exists in the system: 
-        Company: ${checkData.document.company_name}
-        Year: ${checkData.document.report_year}
-        Type: ${checkData.document.report_type}`);
-    } else {
-      // Proceed with adding the document if it doesn't exist
-      const formattedDocumentSource = `${companyName}/${reportYear}/${reportType}.pdf`;
-
-      const documentInfo = {
-        company_name: companyName,
-        report_year: reportYear,
-        report_type: reportType,
-        document_source_link: documentURL,
-        server_location: formattedDocumentSource,
-        user_id: userId,
-      };
-
-      await fetch(serverURL + "/api/addDocument", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(documentInfo),
-      });
+  const renderSortIcon = (column) => {
+    if (sortColumn === column) {
+      return sortDirection === "asc" ? <ArrowDropUp /> : <ArrowDropDown />;
     }
-    setCompanyName("");
-    setReportYear("");
-    setReportType("");
-    setDocumentURL("");
-    setFile(null);
-    loadDocuments();
-    setSubmissionCheck(false);
+    return <ArrowDropDown />;
   };
 
   return (
-    <ThemeProvider theme={lightTheme}>
-      <Box sx={{ padding: 3 }}>
-        <Typography variant="h4" gutterBottom>
-          Document Management
-        </Typography>
-        <FormControl fullWidth>
-          <form autoComplete="off" onSubmit={handleSubmissionValidation}>
-            <Grid container spacing={3}>
-              <Grid item xs={12} sm={6}>
-                <CompanySelection
-                  companyName={companyName}
-                  setCompanyName={setCompanyName}
-                  submissionCheck={submissionCheck}
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <ReportYearInput
-                  reportYear={reportYear}
-                  setReportYear={setReportYear}
-                  submissionCheck={submissionCheck}
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <ReportTypeInput
-                  reportType={reportType}
-                  setReportType={setReportType}
-                  submissionCheck={submissionCheck}
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <URLInput
-                  documentURL={documentURL}
-                  setDocumentURL={setDocumentURL}
-                  submissionCheck={submissionCheck}
-                />
-              </Grid>
-              <Grid item xs={12}>
-                <FileUpload
-                  file={file} // Pass file state here
-                  setFile={setFile} // Pass setFile to update the file
-                  setDocumentURL={setDocumentURL} // Pass setDocumentURL for file URL
-                  submissionCheck={submissionCheck} // Pass submissionCheck to show error messages
-                />
-              </Grid>
-            </Grid>
-            <Button
-              variant="contained"
-              color="primary"
-              type="submit"
-              sx={{ marginTop: 2 }}
-            >
-              Submit
-            </Button>
-          </form>
+    
+    <div className="main-page" style={{ padding: "1rem" }}>
+
+      {/* Header Section */}
+      <Typography
+      variant="h1"
+      style={{
+        color: "#004d00",
+        margin: "0 0 0.5rem 0",
+        fontFamily: 'Lato, sans-serif',  // Use Lato font
+        fontWeight: 700,  // Font weight for h1
+        fontSize: '2.5rem',  // Font size
+      }}
+    >
+      Manage Files Page
+    </Typography>
+
+    {/* Welcome Message */}
+    <Typography
+      variant="h2"
+      style={{
+        color: "#838D94",
+        margin: "0 0 0.5rem 0",
+        fontFamily: 'Lato, sans-serif',  // Use Lato font
+        fontWeight: 600,  // Font weight for h1
+        fontSize: '1.5rem',  // Font size
+      }}
+    >
+      Welcome! <span role="img" aria-label="waving">👋</span>
+    </Typography>
+
+      {/* Search Bar and Controls */}
+      <div style={{ 
+        display: "flex", 
+        alignItems: "center", 
+        gap: "1rem", 
+        marginBottom: "1rem",
+        marginTop: "1.5rem"
+        }}>
+        {/* Search Bar */}
+        <TextField
+          placeholder="Search by file name, company, year, or type"
+          style={{
+            width: "50%",
+            height: "50px",
+          }}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <Search />
+              </InputAdornment>
+            ),
+          }}
+        />
+
+        {/* Add New Button */}
+        <Button
+          variant="contained"
+          style={{
+            backgroundColor: "#9BBB70",  
+            color: "#004d00",
+            padding: "0.5rem 2rem",
+            marginLeft: "auto", // Pushes the button to the right
+          }}
+          onClick={handleDialogOpen}
+        >
+          + Add New
+        </Button>
+      </div>
+
+      {/* Dropdown Menus */}
+      <div style={{ display: "flex", gap: "1rem" }}>
+        <FormControl style={{ minWidth: 150, marginTop: "1rem"}}>
+          <InputLabel>Report Type</InputLabel>
+          <Select defaultValue="" label="Report Type">
+            {["Type 1", "Type 2", "Type 3"].map((type, index) => (
+              <MenuItem key={index} value={type}>
+                {type}
+              </MenuItem>
+            ))}
+          </Select>
         </FormControl>
 
-        {submissionCheck && (
-          <Typography variant="h5" color="error">
-            Please fill out all fields.
-          </Typography>
-        )}
+        <FormControl style={{ minWidth: 150, marginTop: "1rem" }}>
+          <InputLabel>Report Year</InputLabel>
+          <Select defaultValue="" label="Report Year">
+            {["2023", "2022", "2021"].map((year, index) => (
+              <MenuItem key={index} value={year}>
+                {year}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
 
-        {/* Filters Section */}
-        <Box sx={{ marginTop: 2 }}>
-          <Grid container spacing={3}>
-            <Grid item xs={12} sm={4}>
-              <FormLabel>Filter by Company</FormLabel>
-              <TextField
-                fullWidth
-                value={companyFilter}
-                onChange={(e) => setCompanyFilter(e.target.value)}
-                label="Company Name"
-              />
-            </Grid>
-            <Grid item xs={12} sm={4}>
-              <FormLabel>Filter by Year</FormLabel>
-              <TextField
-                fullWidth
-                value={yearFilter}
-                onChange={(e) => setYearFilter(e.target.value)}
-                label="Report Year"
-              />
-            </Grid>
-            <Grid item xs={12} sm={4}>
-              <FormLabel>Filter by Report Type</FormLabel>
-              <TextField
-                fullWidth
-                value={typeFilter}
-                onChange={(e) => setTypeFilter(e.target.value)}
-                label="Report Type"
-              />
-            </Grid>
-          </Grid>
-        </Box>
+        <FormControl style={{ minWidth: 150, marginTop: "1rem" }}>
+          <InputLabel>Upload Date</InputLabel>
+          <Select defaultValue="" label="Upload Date">
+            {["Last Week", "Last Month", "Last Year"].map((date, index) => (
+              <MenuItem key={index} value={date}>
+                {date}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+      </div>
 
-        {/* Search Bar */}
-        <Box sx={{ marginTop: 2 }}>
+      {/* Popup for Adding New File */}
+      <Dialog open={openDialog} onClose={handleDialogClose}>
+        <DialogTitle>Add New File</DialogTitle>
+        <DialogContent>
           <TextField
+            label="Company Name"
             fullWidth
-            value={searchText}
-            onChange={(e) => setSearchText(e.target.value)}
-            label="Search Documents"
+            style={{ marginBottom: "1rem", marginTop: "0.5rem" }}
+            value={companyName}
+            onChange={(e) => setCompanyName(e.target.value)}
           />
-        </Box>
+          <TextField
+            label="Report Year"
+            fullWidth
+            style={{ marginBottom: "1rem" }}
+            value={reportYear}
+            onChange={(e) => setReportYear(e.target.value)}
+          />
+          <TextField
+            label="Report Name"
+            fullWidth
+            style={{ marginBottom: "1rem" }}
+            value={reportName}
+            onChange={(e) => setReportName(e.target.value)}
+          />
+          <TextField
+            label="Document URL"
+            fullWidth
+            style={{ marginBottom: "1rem" }}
+            value={documentURL}
+            onChange={(e) => setDocumentURL(e.target.value)}
+          />
+          <input
+            type="file"
+            onChange={(e) => setFile(e.target.files[0])}
+            style={{ marginBottom: "1rem" }}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleDialogClose} color="primary">
+            Cancel
+          </Button>
+          <Button onClick={handleSubmit} color="primary">
+            Submit
+          </Button>
+        </DialogActions>
+      </Dialog>
 
-        {/* Documents Table */}
-        <TableContainer component={Paper} sx={{ marginTop: 2 }}>
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell>Company Name</TableCell>
-                <TableCell>Report Year</TableCell>
-                <TableCell>Report Type</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {Array.isArray(filteredDocuments) &&
-              filteredDocuments.length > 0 ? (
-                filteredDocuments.map((doc) => (
-                  <TableRow key={doc.document_id}>
-                    <TableCell>{doc.company_name}</TableCell>
-                    <TableCell>{doc.report_year}</TableCell>
-                    <TableCell>{doc.report_type}</TableCell>
-                  </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={3}>No documents available</TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      </Box>
-    </ThemeProvider>
+      {/* Table Section */}
+      <Typography
+      variant="h2"
+      style={{
+        color: "#051F61",
+        margin: "0 0 0.5rem 0",
+        fontFamily: 'Lato, sans-serif', 
+        fontWeight: 500,  
+        fontSize: '1.5rem',  
+        marginTop: 15
+      }}
+    >
+      All Files
+    </Typography>
+      <table style={{ width: "100%", borderCollapse: "collapse" }}>
+        <thead>
+          <tr>
+            <th
+              style={{ textAlign: "left", padding: "0.5rem", borderBottom: "2px solid #ccc", cursor: "pointer" }}
+              onClick={() => handleSort("name")}
+            >
+              Name {renderSortIcon("name")}
+            </th>
+            <th
+              style={{ textAlign: "left", padding: "0.5rem", borderBottom: "2px solid #ccc", cursor: "pointer" }}
+              onClick={() => handleSort("year")}
+            >
+              Report Year {renderSortIcon("year")}
+            </th>
+            <th
+              style={{ textAlign: "left", padding: "0.5rem", borderBottom: "2px solid #ccc", cursor: "pointer" }}
+              onClick={() => handleSort("type")}
+            >
+              Report Type {renderSortIcon("type")}
+            </th>
+            <th
+              style={{ textAlign: "left", padding: "0.5rem", borderBottom: "2px solid #ccc", cursor: "pointer" }}
+              onClick={() => handleSort("date")}
+            >
+              Upload Date {renderSortIcon("date")}
+            </th>
+            <th style={{ padding: "0.5rem", borderBottom: "2px solid #ccc" }}></th>
+          </tr>
+        </thead>
+        <tbody>
+          {data.map((row, index) => (
+            <tr key={index}>
+              <td style={{ padding: "0.5rem", borderBottom: "1px solid #eee" }}>{row.name}</td>
+              <td style={{ padding: "0.5rem", borderBottom: "1px solid #eee" }}>{row.year}</td>
+              <td style={{ padding: "0.5rem", borderBottom: "1px solid #eee" }}>{row.type}</td>
+              <td style={{ padding: "0.5rem", borderBottom: "1px solid #eee" }}>{row.date}</td>
+              <td style={{ textAlign: "center", padding: "0.5rem", borderBottom: "1px solid #eee" }}>⋮</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   );
 };
 
 export default ManageFiles;
-
-const CompanySelection = ({ companyName, setCompanyName, submissionCheck }) => {
-  const [focus, setFocus] = useState(false); // Track focus state
-
-  return (
-    <div>
-      <FormLabel htmlFor="company-select" sx={{ marginBottom: 1 }}>
-        Company Name
-      </FormLabel>
-      <Select
-        labelId="company-select-label"
-        id="company-select"
-        value={companyName}
-        onChange={(e) => setCompanyName(e.target.value)}
-        onFocus={() => setFocus(true)} // Set focus onSelect
-        onBlur={() => setFocus(false)} // Remove focus onBlur
-        sx={{
-          width: "100%",
-          borderColor:
-            submissionCheck && companyName === "" ? "red" : "inherit",
-          "&.Mui-focused": {
-            borderColor: "blue", // Add custom color when focused
-          },
-          outline: focus ? "2px solid blue" : "none", // Manage focus outline
-        }}
-      >
-        <MenuItem value="BP">BP</MenuItem>
-        <MenuItem value="Cepsa">Cepsa</MenuItem>
-        <MenuItem value="Eni">Eni</MenuItem>
-        <MenuItem value="Equinor">Equinor</MenuItem>
-        <MenuItem value="OMV">OMV</MenuItem>
-        <MenuItem value="Puma">Puma</MenuItem>
-        <MenuItem value="Repsol">Repsol</MenuItem>
-        <MenuItem value="Shell">Shell</MenuItem>
-        <MenuItem value="TotalEnergies">TotalEnergies</MenuItem>
-        <MenuItem value="Wintershall">Wintershall</MenuItem>
-      </Select>
-      <FormHelperText error={submissionCheck && companyName === ""}>
-        {submissionCheck && companyName === ""
-          ? "*Please select a company. It is a mandatory field!"
-          : "Select a company"}
-      </FormHelperText>
-    </div>
-  );
-};
-
-const ReportYearInput = ({ reportYear, setReportYear, submissionCheck }) => (
-  <div>
-    <FormLabel htmlFor="report-year" sx={{ marginBottom: 1 }}>
-      Report Year
-    </FormLabel>
-    <TextField
-      id="report-year"
-      label="Report Year"
-      value={reportYear}
-      onChange={(e) => setReportYear(e.target.value)}
-      required
-      sx={{ width: "100%" }}
-    />
-    {reportYear === "" && submissionCheck && (
-      <div>
-        <em style={{ color: "red" }}>
-          *Please enter a report year. It is a mandatory field!
-        </em>
-      </div>
-    )}
-  </div>
-);
-
-const ReportTypeInput = ({ reportType, setReportType, submissionCheck }) => {
-  const [focus, setFocus] = useState(false); // Track focus state
-
-  return (
-    <div>
-      <FormLabel htmlFor="report-select" sx={{ marginBottom: 1 }}>
-        Report Name
-      </FormLabel>
-      <Select
-        labelId="report-select-label"
-        id="report-select"
-        value={reportType}
-        onChange={(e) => setReportType(e.target.value)}
-        onFocus={() => setFocus(true)} // Set focus onSelect
-        onBlur={() => setFocus(false)} // Remove focus onBlur
-        sx={{
-          width: "100%",
-          borderColor: submissionCheck && reportType === "" ? "red" : "inherit",
-          "&.Mui-focused": {
-            borderColor: "blue", // Add custom color when focused
-          },
-          outline: focus ? "2px solid blue" : "none", // Manage focus outline
-        }}
-      >
-        <MenuItem value="Factbook">Factbook</MenuItem>
-        <MenuItem value="Form 20">Form 20</MenuItem>
-        <MenuItem value="Progress Report">Progress Report</MenuItem>
-        <MenuItem value="URD">URD</MenuItem>
-        <MenuItem value="CDP">CDP</MenuItem>
-        <MenuItem value="Annual Report & Form 20">
-          Annual Report & Form 20
-        </MenuItem>
-        <MenuItem value="Sustainability Report">Sustainability Report</MenuItem>
-        <MenuItem value="Advancing The Energy Transition">
-          Advancing The Energy Transition
-        </MenuItem>
-        <MenuItem value="ESG Datasheet">ESG Datasheet</MenuItem>
-        <MenuItem value="Net Zero Report">Net Zero Report</MenuItem>
-        <MenuItem value="Sustainability Performance">
-          Sustainability Performance
-        </MenuItem>
-        <MenuItem value="Annual Report">Annual Report</MenuItem>
-        <MenuItem value="Path to Decarbonization">
-          Path to Decarbonization
-        </MenuItem>
-        <MenuItem value="Carbon Neutrality">Carbon Neutrality</MenuItem>
-        <MenuItem value="Just Transition">Just Transition</MenuItem>
-        <MenuItem value="Climate Review">Climate Review</MenuItem>
-        <MenuItem value="Energy Transition">Energy Transition</MenuItem>
-        <MenuItem value="Financial Statements">Financial Statements</MenuItem>
-        <MenuItem value="Results">Results</MenuItem>
-        <MenuItem value="Financial Report">Financial Report</MenuItem>
-        <MenuItem value="ESG Report">ESG Report</MenuItem>
-      </Select>
-      <FormHelperText error={submissionCheck && reportType === ""}>
-        {submissionCheck && reportType === ""
-          ? "*Please select a report type. It is a mandatory field!"
-          : "Select a report type"}
-      </FormHelperText>
-    </div>
-  );
-};
-
-const URLInput = ({ documentURL, setDocumentURL, submissionCheck }) => (
-  <div>
-    <FormLabel htmlFor="url" sx={{ marginBottom: 1 }}>
-      Document URL
-    </FormLabel>
-    <TextField
-      id="url"
-      label="Document URL"
-      value={documentURL}
-      onChange={(e) => setDocumentURL(e.target.value)}
-      required
-      sx={{ width: "100%" }}
-    />
-    {documentURL === "" && submissionCheck && (
-      <div>
-        <em style={{ color: "red" }}>
-          *Please enter a document URL. It is a mandatory field!
-        </em>
-      </div>
-    )}
-  </div>
-);
