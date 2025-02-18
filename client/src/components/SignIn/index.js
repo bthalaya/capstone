@@ -24,7 +24,7 @@ const lightTheme = createTheme({
   },
 });
 
-const About = () => {
+const SignIn = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [emailError, setEmailError] = useState('');
@@ -133,4 +133,4 @@ const About = () => {
   );
 };
 
-export default About;
+export default SignIn;

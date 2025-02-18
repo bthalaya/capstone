@@ -1,4 +1,4 @@
-import React, {useState} from "react";
+import React, {useState, useEffect} from "react";
 import {  InputAdornment, TextField, Button, MenuItem, Select, FormControl, InputLabel} from "@mui/material";
 import {  Dialog, DialogActions, DialogContent, DialogTitle } from "@mui/material";
 import { Search, ArrowDropDown, ArrowDropUp, } from "@mui/icons-material";
@@ -27,12 +27,7 @@ const app = initializeApp(firebaseConfig);
 const ManageFiles = () => {
   const [sortColumn, setSortColumn] = useState(null); // Track which column is being sorted
   const [sortDirection, setSortDirection] = useState("asc"); // Track sorting direction
-  const [data, setData] = useState([
-    { name: "BP", year: 2022, type: "Annual Report", date: "Dec 13, 2022" },
-    { name: "Shell", year: 2022, type: "Sustainability Report", date: "Dec 12, 2022" },
-    { name: "Exxon", year: 2021, type: "Financial Report", date: "Jan 8, 2022" },
-    { name: "Chevron", year: 2023, type: "Annual Report", date: "Oct 22, 2023" },
-  ]);
+  const [data, setData] = useState([]);
 
   const [openDialog, setOpenDialog] = useState(false); // For the popup
   const [companyName, setCompanyName] = useState('');
@@ -40,14 +35,92 @@ const ManageFiles = () => {
   const [reportName, setReportName] = useState('');
   const [documentURL, setDocumentURL] = useState('');
   const [file, setFile] = useState(null); // File upload state
+  const userId = 1; // Hardcoded user ID
+  const [submissionCheck, setSubmissionCheck] = useState(false);
+  const [companyFilter, setCompanyFilter] = useState("");
+  const [yearFilter, setYearFilter] = useState("");
+  const [typeFilter, setTypeFilter] = useState("");
+  const [searchText, setSearchText] = useState("");
+
+    useEffect(() => {
+      loadDocuments();
+    }, []);
+
+    const loadDocuments = async () => {
+      const response = await fetch(serverURL + "/api/getDocuments", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      const data = await response.json();
+      setData(data.documents)
+    };
 
   const handleDialogOpen = () => setOpenDialog(true);
   const handleDialogClose = () => setOpenDialog(false);
 
-  const handleSubmit = () => {
-    // Handle the form submission logic here (e.g., sending data to server)
-    console.log("Form submitted", { companyName, reportYear, reportName, documentURL, file });
-    setOpenDialog(false);
+  const handleSubmit = async () => {
+    // Step 1: Check if the document exists in the system
+    const checkResponse = await fetch(serverURL + "/api/checkDocument", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        company_name: companyName,
+        report_year: reportYear,
+        report_type: reportName, // Assuming reportType is the name of the report type
+      }),
+    });
+  
+    const checkData = await checkResponse.json();
+    console.log("Response from /api/checkDocument:", checkData);
+  
+    if (checkData.exists) {
+      // Document already exists
+      alert(`This document already exists in the system: 
+        Company: ${checkData.document.company_name}
+        Year: ${checkData.document.report_year}
+        Type: ${checkData.document.report_type}`);
+    } else {
+      // Step 2: Proceed with adding the document to the system if it doesn't exist
+      const formattedDocumentSource = `${companyName}/${reportYear}/${reportName}.pdf`;
+  
+      const documentInfo = {
+        company_name: companyName,
+        report_year: reportYear,
+        report_type: reportName,
+        document_source_link: documentURL,
+        server_location: formattedDocumentSource,
+        user_id: userId,
+      };
+  
+      // Assuming there is an endpoint for adding a document
+      const submitResponse = await fetch(serverURL + "/api/addDocument", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(documentInfo),
+      });
+  
+      const submitData = await submitResponse.json();
+      console.log("Document added:", submitData);
+  
+      if (submitData.success) {
+        alert("Document successfully added to the system!");
+        // Reset form values after submission
+        setCompanyName('');
+        setReportYear('');
+        setReportName('');
+        setDocumentURL('');
+        setFile(null);
+        setOpenDialog(false);
+      } else {
+        alert("An error occurred while adding the document. Please try again.");
+      }
+    }
   };
 
   const handleSort = (column) => {
@@ -275,9 +348,9 @@ const ManageFiles = () => {
         <tbody>
           {data.map((row, index) => (
             <tr key={index}>
-              <td style={{ padding: "0.5rem", borderBottom: "1px solid #eee" }}>{row.name}</td>
-              <td style={{ padding: "0.5rem", borderBottom: "1px solid #eee" }}>{row.year}</td>
-              <td style={{ padding: "0.5rem", borderBottom: "1px solid #eee" }}>{row.type}</td>
+              <td style={{ padding: "0.5rem", borderBottom: "1px solid #eee" }}>{row.company_name}</td>
+              <td style={{ padding: "0.5rem", borderBottom: "1px solid #eee" }}>{row.report_year}</td>
+              <td style={{ padding: "0.5rem", borderBottom: "1px solid #eee" }}>{row.report_type}</td>
               <td style={{ padding: "0.5rem", borderBottom: "1px solid #eee" }}>{row.date}</td>
               <td style={{ textAlign: "center", padding: "0.5rem", borderBottom: "1px solid #eee" }}>⋮</td>
             </tr>
