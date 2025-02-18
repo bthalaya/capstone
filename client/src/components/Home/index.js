@@ -526,3 +526,4 @@ const URLInput = ({ documentURL, setDocumentURL, submissionCheck }) => (
     )}
   </div>
 );
+
