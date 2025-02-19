@@ -8,6 +8,8 @@ import DashboardIcon from '@mui/icons-material/Dashboard';  // Add this line
 import HelpIcon from '@mui/icons-material/Help';  // Add this line
 import ApiIcon from '@mui/icons-material/Api';  // Add this line
 import InfoIcon from '@mui/icons-material/Info';  // Add this line
+import LoginIcon from '@mui/icons-material/Login';
+import HowToRegIcon from '@mui/icons-material/HowToReg';
 import { Notifications, Settings, AccountCircle, Menu } from "@mui/icons-material";
 import "./Navbar.css";
 import { createTheme, ThemeProvider } from '@mui/material/styles';
@@ -47,7 +49,9 @@ const Navigation = () => {
     { name: 'Dashboard', to: '/dashboard', icon: <DashboardIcon /> },
     { name: 'Help', to: '/help', icon: <HelpIcon /> },
     { name: 'API Test', to: '/APITest', icon: <ApiIcon /> },
-    { name: 'About', to: '/about', icon: <InfoIcon /> }
+    { name: 'About', to: '/about', icon: <InfoIcon /> },
+    { name: 'Sign In', to: '/SignIn', icon: <LoginIcon /> },
+    { name: 'Sign Up', to: '/SignUp', icon: <HowToRegIcon /> }
   ];
 
   // Drawer content (links inside the drawer)
