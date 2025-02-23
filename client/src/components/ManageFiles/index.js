@@ -277,7 +277,7 @@ useEffect(() => {
             value={reportTypeQuery}
             onChange={(e) => setReportTypeQuery(e.target.value)}
           >
-            {["Type 1", "Type 2", "Type 3"].map((type, index) => (
+            {["Factbook", "Form 20", "Progress Report", "URD", "CDP", "Annual Report & Form 20", "Sustainability Report", "Advancing The Energy Transition", "ESG Datasheet", "Net Zero Report", "Sustainability Performance", "Annual Report", "Path to Decarbonization", "Carbon Neutrality", "Just Transition", "Climate Review", "Energy Transition", "Financial Statements", "Results", "Financial Report", "ESG Report"].map((type, index) => (
               <MenuItem key={index} value={type}>
                 {type}
               </MenuItem>
