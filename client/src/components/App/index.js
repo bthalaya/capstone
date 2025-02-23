@@ -11,6 +11,8 @@ import Navigation from '../Navigation';
 import Help from '../Help';
 import APITest from '../APITest';
 import About from '../About';
+import SignIn from '../SignIn';
+import SignUp from '../SignUp';
 
 class App extends Component {
   constructor(props) {
@@ -48,6 +50,8 @@ class App extends Component {
           <Route path="/help" component={Help} />
           <Route path="/APITest" component={APITest} />
           <Route path="/about" component={About} />
+          <Route path="/SignIn" component={SignIn} />
+          <Route path="/SignUp" component={SignUp} />
         </div>
       </Router>
     );
