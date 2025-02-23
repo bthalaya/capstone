@@ -1,4 +1,4 @@
-import React, {useState, useEffect} from "react";
+import React, {useState, useEffect, useCallback} from "react";
 import {  InputAdornment, TextField, Button, MenuItem, Select, FormControl, InputLabel} from "@mui/material";
 import {  Dialog, DialogActions, DialogContent, DialogTitle } from "@mui/material";
 import { Search, ArrowDropDown, ArrowDropUp, } from "@mui/icons-material";
@@ -36,15 +36,63 @@ const ManageFiles = () => {
   const [documentURL, setDocumentURL] = useState('');
   const [file, setFile] = useState(null); // File upload state
   const userId = 1; // Hardcoded user ID
-  const [submissionCheck, setSubmissionCheck] = useState(false);
-  const [companyFilter, setCompanyFilter] = useState("");
-  const [yearFilter, setYearFilter] = useState("");
-  const [typeFilter, setTypeFilter] = useState("");
-  const [searchText, setSearchText] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [reportYearQuery, setReportYearQuery] = useState("");
+  const [uploadDateQuery, setUploadDateQuery] = useState("");
+  const [reportTypeQuery, setReportTypeQuery] = useState("");
+  const [filteredDocuments, setFilteredDocuments] = useState(data);
 
     useEffect(() => {
       loadDocuments();
     }, []);
+
+
+    const filterDocuments = useCallback(() => {
+      let filtered = [...data];
+  
+      if (searchQuery) {
+        filtered = filtered.filter((doc) =>
+          doc.company_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          doc.report_year.toString().includes(searchQuery) ||
+          doc.report_type.toLowerCase().includes(searchQuery.toLowerCase())
+        );
+      }
+  
+      if (reportYearQuery) {
+        filtered = filtered.filter((doc) => doc.report_year.toString() === reportYearQuery);
+      }
+  
+      if (uploadDateQuery) {
+        const now = new Date();
+        
+        filtered = filtered.filter((doc) => {
+          const uploadDate = new Date(doc.date);
+          const daysDiff = (now - uploadDate) / (1000 * 60 * 60 * 24);
+      
+          if (uploadDateQuery === "Last Week") {
+            return daysDiff <= 7;
+          }
+          if (uploadDateQuery === "Last Month") {
+            return daysDiff <= 30;
+          }
+          if (uploadDateQuery === "Last Year") {
+            return daysDiff <= 365;
+          }
+      
+          return true;
+        });
+      }
+  
+      if (reportTypeQuery) {
+        filtered = filtered.filter((doc) => doc.report_type === reportTypeQuery);
+      }
+  
+      setFilteredDocuments(filtered);
+}, [data, searchQuery, reportYearQuery, uploadDateQuery, reportTypeQuery]);
+
+useEffect(() => {
+  filterDocuments();
+}, [filterDocuments]);
 
     const loadDocuments = async () => {
       const response = await fetch(serverURL + "/api/getDocuments", {
@@ -193,6 +241,8 @@ const ManageFiles = () => {
             width: "50%",
             height: "50px",
           }}
+          value={searchQuery}
+          onChange = {(e) => setSearchQuery(e.target.value)}
           InputProps={{
             startAdornment: (
               <InputAdornment position="start">
@@ -221,7 +271,12 @@ const ManageFiles = () => {
       <div style={{ display: "flex", gap: "1rem" }}>
         <FormControl style={{ minWidth: 150, marginTop: "1rem"}}>
           <InputLabel>Report Type</InputLabel>
-          <Select defaultValue="" label="Report Type">
+          <Select 
+            defaultValue="" 
+            label="Report Type"
+            value={reportTypeQuery}
+            onChange={(e) => setReportTypeQuery(e.target.value)}
+          >
             {["Type 1", "Type 2", "Type 3"].map((type, index) => (
               <MenuItem key={index} value={type}>
                 {type}
@@ -232,8 +287,13 @@ const ManageFiles = () => {
 
         <FormControl style={{ minWidth: 150, marginTop: "1rem" }}>
           <InputLabel>Report Year</InputLabel>
-          <Select defaultValue="" label="Report Year">
-            {["2023", "2022", "2021"].map((year, index) => (
+          <Select 
+            defaultValue="" 
+            label="Report Year"
+            value={reportYearQuery}
+            onChange={(e) => setReportYearQuery(e.target.value)}
+          >
+            {["2023", "2022", "2021", "2020", "2019", "2018", "2017", "2016", "2015", "2014"].map((year, index) => (
               <MenuItem key={index} value={year}>
                 {year}
               </MenuItem>
@@ -243,7 +303,12 @@ const ManageFiles = () => {
 
         <FormControl style={{ minWidth: 150, marginTop: "1rem" }}>
           <InputLabel>Upload Date</InputLabel>
-          <Select defaultValue="" label="Upload Date">
+          <Select 
+            defaultValue="" 
+            label="Upload Date"
+            value={uploadDateQuery}
+            onChange={(e) => setUploadDateQuery(e.target.value)}
+          >
             {["Last Week", "Last Month", "Last Year"].map((date, index) => (
               <MenuItem key={index} value={date}>
                 {date}
@@ -346,12 +411,12 @@ const ManageFiles = () => {
           </tr>
         </thead>
         <tbody>
-          {data.map((row, index) => (
+          {filteredDocuments.map((row, index) => (
             <tr key={index}>
               <td style={{ padding: "0.5rem", borderBottom: "1px solid #eee" }}>{row.company_name}</td>
               <td style={{ padding: "0.5rem", borderBottom: "1px solid #eee" }}>{row.report_year}</td>
               <td style={{ padding: "0.5rem", borderBottom: "1px solid #eee" }}>{row.report_type}</td>
-              <td style={{ padding: "0.5rem", borderBottom: "1px solid #eee" }}>{row.date}</td>
+              <td style={{ padding: "0.5rem", borderBottom: "1px solid #eee" }}>{new Date(row.date).toISOString().split('T')[0]}</td>
               <td style={{ textAlign: "center", padding: "0.5rem", borderBottom: "1px solid #eee" }}>⋮</td>
             </tr>
           ))}
