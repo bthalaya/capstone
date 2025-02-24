@@ -26,6 +26,7 @@ admin.initializeApp({
 console.log("Firebase bucket initialized:", admin.storage().bucket().name);
 
 app.use(bodyParser.json({ limit: "50mb" }));
+app.use(express.json());
 app.use(bodyParser.urlencoded({ limit: "50mb", extended: true }));
 
 // Add this middleware for logging requests
@@ -104,6 +105,97 @@ app.post("/api/loadUserSettings", async (req, res) => {
     sql.close();
   }
 });
+
+app.post('/api/addProfile', async (req, res) => {
+  try {
+    const pool = await sql.connect(config);
+    const { first_name, last_name, email_address, username, password } = req.body;
+
+    // Check if the username already exists
+    const result = await pool
+      .request()
+      .input('username', sql.VarChar, username).query('SELECT * FROM users WHERE username = @username');
+    if (result.recordset.length > 0) {
+      return res.status(400).send({ success: false, message: 'Username already exists' });
+    }
+    
+    // Insert the new user
+    await pool
+      .request()
+      .input('first_name', sql.NVarChar, first_name)
+      .input('last_name', sql.NVarChar, last_name)
+      .input('email_address', sql.VarChar, email_address)
+      .input('username', sql.VarChar, username)
+      .input('password', sql.VarChar, password).query(`
+        INSERT INTO users (first_name, last_name, email_address, username, password)
+        VALUES (@first_name, @last_name, @email_address, @username, @password)
+      `);
+    
+    res.send({ success: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send({ success: false, message: 'Error registering user' });
+  }
+});
+
+app.post('/api/login', async (req, res) => {
+  try {
+    const pool = await sql.connect(config);
+    const { username, password } = req.body;
+
+    // Query the database for the user with the provided credentials
+    const result = await pool
+      .request()
+      .input('username', sql.VarChar, username)
+      .input('password', sql.VarChar, password).query(`
+        SELECT * FROM users
+        WHERE username = @username 
+          AND password = @password
+      `);
+
+    // Check if a record was returned
+    if (result.recordset.length > 0) {
+      res.status(200).send({ exists: true, user: result.recordset[0] });
+    } else {
+      res.status(200).send({ exists: false });
+    }
+  } catch (err) {
+    console.error(err);
+    res.status(500).send({ error: 'Error checking user credentials in the database.' });
+  } finally {
+    sql.close();
+  }
+});
+
+app.get('/api/getProfile', async (req, res) => {
+  try {
+    const pool = await sql.connect(config);
+    const { username } = req.query;
+
+    // Query the database for the user by username
+    const result = await pool
+      .request()
+      .input('username', sql.NVarChar, username)
+      .query(`
+        SELECT * 
+        FROM capstone.dbo.users
+        WHERE username = @username
+      `);
+
+    // Check if the user was found
+    if (result.recordset.length > 0) {
+      res.status(200).send({ profile: result.recordset[0] });
+    } else {
+      res.status(404).send({ message: 'User not found' });
+    }
+  } catch (error) {
+    console.error(error.message);
+    res.status(500).send({ error: 'Failed to fetch profile' });
+  } finally {
+    sql.close();
+  }
+});
+
 
 // New endpoint to add a document
 app.post("/api/addDocument", async (req, res) => {
@@ -464,6 +556,8 @@ app.post("/upload", upload.single("file"), async (req, res) => {
     res.status(500).send("Error uploading file to Firebase Storage");
   }
 });
+
+
 
 const PORT = process.env.PORT || 5000;
 
