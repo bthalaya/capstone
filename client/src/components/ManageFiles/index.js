@@ -7,6 +7,8 @@ import { initializeApp } from "firebase/app";
 import { Notifications, Settings, AccountCircle } from "@mui/icons-material";
 import { Typography } from '@mui/material';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
+import store from '../../store';
+import { useHistory } from 'react-router-dom';
 import "@fontsource/lato";  // Ensure this is added
 
 const serverURL = "http://localhost:5000"; // Your server URL
@@ -41,10 +43,50 @@ const ManageFiles = () => {
   const [uploadDateQuery, setUploadDateQuery] = useState("");
   const [reportTypeQuery, setReportTypeQuery] = useState("");
   const [filteredDocuments, setFilteredDocuments] = useState(data);
+  const history = useHistory();
+  const [value, setValue] = React.useState(0);
 
     useEffect(() => {
       loadDocuments();
     }, []);
+
+    let[profile,setProfile]=React.useState([]);
+
+    useEffect(() => {
+      loadApiGetProfiles();
+    },[]);
+
+    const handleChange = (newValue) => {
+      history.push(`${newValue}`);
+      console.log(newValue)
+      setValue(newValue);
+    };
+
+    const loadApiGetProfiles = async () => {
+      const userNameGlobal = store.getState().user.userNameGlobal;
+    
+      try {
+        const checkResponse = await fetch(`${serverURL}/api/getProfile?username=${userNameGlobal}`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+    
+        const checkData = await checkResponse.json();
+        console.log('Profile data:', checkData);
+    
+        // Update profile state with the fetched data
+        if (checkResponse.status === 200) {
+          setProfile(checkData);  // Set profile data
+        } else {
+          console.log('User not found or error fetching profile');
+          handleChange("/SignIn");
+        }
+      } catch (error) {
+        console.error('Error fetching profile:', error);
+      }
+    };
 
 
     const filterDocuments = useCallback(() => {
@@ -209,7 +251,7 @@ useEffect(() => {
         fontSize: '2.5rem',  // Font size
       }}
     >
-      Manage Files Page
+      Manage Files
     </Typography>
 
     {/* Welcome Message */}
@@ -218,12 +260,15 @@ useEffect(() => {
       style={{
         color: "#838D94",
         margin: "0 0 0.5rem 0",
-        fontFamily: 'Lato, sans-serif',  // Use Lato font
-        fontWeight: 600,  // Font weight for h1
-        fontSize: '1.5rem',  // Font size
+        fontFamily: 'Lato, sans-serif',
+        fontWeight: 600,
+        fontSize: '1.5rem',
       }}
     >
-      Welcome! <span role="img" aria-label="waving">👋</span>
+      {profile && profile.profile && profile.profile.first_name 
+        ? `Welcome, ${profile.profile.first_name.charAt(0).toUpperCase() + profile.profile.first_name.slice(1)}! `
+        : 'Welcome! '}
+      <span role="img" aria-label="waving">👋</span>
     </Typography>
 
       {/* Search Bar and Controls */}
