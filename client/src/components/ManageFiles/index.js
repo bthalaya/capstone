@@ -39,9 +39,9 @@ const ManageFiles = () => {
   const [file, setFile] = useState(null); // File upload state
   const userId = 1; // Hardcoded user ID
   const [searchQuery, setSearchQuery] = useState("");
-  const [reportYearQuery, setReportYearQuery] = useState("");
-  const [uploadDateQuery, setUploadDateQuery] = useState("");
-  const [reportTypeQuery, setReportTypeQuery] = useState("");
+  const [reportYearQuery, setReportYearQuery] = useState("All years");
+  const [uploadDateQuery, setUploadDateQuery] = useState("All time");
+  const [reportTypeQuery, setReportTypeQuery] = useState("All reports");
   const [filteredDocuments, setFilteredDocuments] = useState(data);
   const history = useHistory();
   const [value, setValue] = React.useState(0);
@@ -100,11 +100,11 @@ const ManageFiles = () => {
         );
       }
   
-      if (reportYearQuery) {
+      if (reportYearQuery && reportYearQuery !== "All years") {
         filtered = filtered.filter((doc) => doc.report_year.toString() === reportYearQuery);
       }
   
-      if (uploadDateQuery) {
+      if (uploadDateQuery && uploadDateQuery !== "All time") {
         const now = new Date();
         
         filtered = filtered.filter((doc) => {
@@ -125,7 +125,7 @@ const ManageFiles = () => {
         });
       }
   
-      if (reportTypeQuery) {
+      if (reportTypeQuery && reportTypeQuery !== "All reports") {
         filtered = filtered.filter((doc) => doc.report_type === reportTypeQuery);
       }
   
@@ -214,20 +214,41 @@ useEffect(() => {
   };
 
   const handleSort = (column) => {
-    // Set the sorting direction
+    // Determine sorting direction
     const newDirection = sortColumn === column && sortDirection === "asc" ? "desc" : "asc";
     setSortColumn(column);
     setSortDirection(newDirection);
-
-    // Sort the data
-    const sortedData = [...data].sort((a, b) => {
-      if (a[column] < b[column]) return newDirection === "asc" ? -1 : 1;
-      if (a[column] > b[column]) return newDirection === "asc" ? 1 : -1;
-      return 0;
+  
+    // Sorting logic
+    const sortedData = [...filteredDocuments].sort((a, b) => {
+      let valA = a[column];
+      let valB = b[column];
+  
+      // Handle null or undefined values (push them to the end)
+      if (valA == null) return newDirection === "asc" ? 1 : -1;
+      if (valB == null) return newDirection === "asc" ? -1 : 1;
+  
+      // Special handling for date columns
+      if (column === "date") {
+        valA = new Date(valA);
+        valB = new Date(valB);
+        return newDirection === "asc" ? valA - valB : valB - valA;
+      }
+  
+      // Convert text values to lowercase for case-insensitive sorting
+      if (column === 'type' || column === 'name') {
+        return newDirection === "asc"
+          ? valA.localeCompare(valB) // Ascending order
+          : valB.localeCompare(valA); // Descending order
+      }
+  
+      // Numeric comparison for other cases
+      return newDirection === "asc" ? valA - valB : valB - valA;
     });
-
-    setData(sortedData);
+  
+    setFilteredDocuments(sortedData);
   };
+  
 
   const renderSortIcon = (column) => {
     if (sortColumn === column) {
@@ -296,7 +317,19 @@ useEffect(() => {
             ),
           }}
         />
-
+  {/* Refresh Button */}
+      <Button 
+        variant="contained"
+        style={{ backgroundColor: "#7F9E50", color: "white" }}
+        onClick={() => {
+          setReportYearQuery("All years");
+          setReportTypeQuery("All reports");
+          setSearchQuery("");
+          setUploadDateQuery("All time");
+        }}
+      >
+        Refresh
+      </Button>
         {/* Add New Button */}
         <Button
           variant="contained"
@@ -317,12 +350,11 @@ useEffect(() => {
         <FormControl style={{ minWidth: 150, marginTop: "1rem"}}>
           <InputLabel>Report Type</InputLabel>
           <Select 
-            defaultValue="" 
             label="Report Type"
             value={reportTypeQuery}
             onChange={(e) => setReportTypeQuery(e.target.value)}
           >
-            {["Factbook", "Form 20", "Progress Report", "URD", "CDP", "Annual Report & Form 20", "Sustainability Report", "Advancing The Energy Transition", "ESG Datasheet", "Net Zero Report", "Sustainability Performance", "Annual Report", "Path to Decarbonization", "Carbon Neutrality", "Just Transition", "Climate Review", "Energy Transition", "Financial Statements", "Results", "Financial Report", "ESG Report"].map((type, index) => (
+            {["All reports", "Factbook", "Form 20", "Progress Report", "URD", "CDP", "Annual Report & Form 20", "Sustainability Report", "Advancing The Energy Transition", "ESG Datasheet", "Net Zero Report", "Sustainability Performance", "Annual Report", "Path to Decarbonization", "Carbon Neutrality", "Just Transition", "Climate Review", "Energy Transition", "Financial Statements", "Results", "Financial Report", "ESG Report"].map((type, index) => (
               <MenuItem key={index} value={type}>
                 {type}
               </MenuItem>
@@ -333,12 +365,11 @@ useEffect(() => {
         <FormControl style={{ minWidth: 150, marginTop: "1rem" }}>
           <InputLabel>Report Year</InputLabel>
           <Select 
-            defaultValue="" 
             label="Report Year"
             value={reportYearQuery}
             onChange={(e) => setReportYearQuery(e.target.value)}
           >
-            {["2023", "2022", "2021", "2020", "2019", "2018", "2017", "2016", "2015", "2014"].map((year, index) => (
+            {["All years", "2023", "2022", "2021", "2020", "2019", "2018", "2017", "2016", "2015", "2014"].map((year, index) => (
               <MenuItem key={index} value={year}>
                 {year}
               </MenuItem>
@@ -349,12 +380,11 @@ useEffect(() => {
         <FormControl style={{ minWidth: 150, marginTop: "1rem" }}>
           <InputLabel>Upload Date</InputLabel>
           <Select 
-            defaultValue="" 
             label="Upload Date"
             value={uploadDateQuery}
             onChange={(e) => setUploadDateQuery(e.target.value)}
           >
-            {["Last Week", "Last Month", "Last Year"].map((date, index) => (
+            {["All time", "Last Week", "Last Month", "Last Year"].map((date, index) => (
               <MenuItem key={index} value={date}>
                 {date}
               </MenuItem>
