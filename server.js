@@ -15,6 +15,11 @@ const { Client } = require("ssh2");
 const admin = require("firebase-admin"); // Firebase Admin SDK
 const multer = require("multer");
 const upload = multer({ dest: "uploads/" });
+const {
+  uploadPdfToOpenAI,
+  createThreadAndRunGPT,
+  checkRunStatus,
+} = require("./openaiPDFHandler");
 
 admin.initializeApp({
   credential: admin.credential.cert(
@@ -106,39 +111,43 @@ app.post("/api/loadUserSettings", async (req, res) => {
   }
 });
 
-app.post('/api/addProfile', async (req, res) => {
+app.post("/api/addProfile", async (req, res) => {
   try {
     const pool = await sql.connect(config);
-    const { first_name, last_name, email_address, username, password } = req.body;
+    const { first_name, last_name, email_address, username, password } =
+      req.body;
 
     // Check if the username already exists
     const result = await pool
       .request()
-      .input('username', sql.VarChar, username).query('SELECT * FROM users WHERE username = @username');
+      .input("username", sql.VarChar, username)
+      .query("SELECT * FROM users WHERE username = @username");
     if (result.recordset.length > 0) {
-      return res.status(400).send({ success: false, message: 'Username already exists' });
+      return res
+        .status(400)
+        .send({ success: false, message: "Username already exists" });
     }
-    
+
     // Insert the new user
     await pool
       .request()
-      .input('first_name', sql.NVarChar, first_name)
-      .input('last_name', sql.NVarChar, last_name)
-      .input('email_address', sql.VarChar, email_address)
-      .input('username', sql.VarChar, username)
-      .input('password', sql.VarChar, password).query(`
+      .input("first_name", sql.NVarChar, first_name)
+      .input("last_name", sql.NVarChar, last_name)
+      .input("email_address", sql.VarChar, email_address)
+      .input("username", sql.VarChar, username)
+      .input("password", sql.VarChar, password).query(`
         INSERT INTO users (first_name, last_name, email_address, username, password)
         VALUES (@first_name, @last_name, @email_address, @username, @password)
       `);
-    
+
     res.send({ success: true });
   } catch (err) {
     console.error(err);
-    res.status(500).send({ success: false, message: 'Error registering user' });
+    res.status(500).send({ success: false, message: "Error registering user" });
   }
 });
 
-app.post('/api/login', async (req, res) => {
+app.post("/api/login", async (req, res) => {
   try {
     const pool = await sql.connect(config);
     const { username, password } = req.body;
@@ -146,8 +155,8 @@ app.post('/api/login', async (req, res) => {
     // Query the database for the user with the provided credentials
     const result = await pool
       .request()
-      .input('username', sql.VarChar, username)
-      .input('password', sql.VarChar, password).query(`
+      .input("username", sql.VarChar, username)
+      .input("password", sql.VarChar, password).query(`
         SELECT * FROM users
         WHERE username = @username 
           AND password = @password
@@ -161,13 +170,15 @@ app.post('/api/login', async (req, res) => {
     }
   } catch (err) {
     console.error(err);
-    res.status(500).send({ error: 'Error checking user credentials in the database.' });
+    res
+      .status(500)
+      .send({ error: "Error checking user credentials in the database." });
   } finally {
     sql.close();
   }
 });
 
-app.get('/api/getProfile', async (req, res) => {
+app.get("/api/getProfile", async (req, res) => {
   try {
     const pool = await sql.connect(config);
     const { username } = req.query;
@@ -175,8 +186,7 @@ app.get('/api/getProfile', async (req, res) => {
     // Query the database for the user by username
     const result = await pool
       .request()
-      .input('username', sql.NVarChar, username)
-      .query(`
+      .input("username", sql.NVarChar, username).query(`
         SELECT * 
         FROM capstone.dbo.users
         WHERE username = @username
@@ -186,16 +196,15 @@ app.get('/api/getProfile', async (req, res) => {
     if (result.recordset.length > 0) {
       res.status(200).send({ profile: result.recordset[0] });
     } else {
-      res.status(404).send({ message: 'User not found' });
+      res.status(404).send({ message: "User not found" });
     }
   } catch (error) {
     console.error(error.message);
-    res.status(500).send({ error: 'Failed to fetch profile' });
+    res.status(500).send({ error: "Failed to fetch profile" });
   } finally {
     sql.close();
   }
 });
-
 
 // New endpoint to add a document
 app.post("/api/addDocument", async (req, res) => {
@@ -408,6 +417,32 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
+app.post(
+  "/api/upload-to-openai",
+  upload.single("pdfFile"),
+  async (req, res) => {
+    console.log("📂 Received PDF upload request");
+
+    if (!req.file) {
+      return res.status(400).json({ error: "No file uploaded" });
+    }
+
+    try {
+      const fileId = await uploadPdfToOpenAI(req.file.path);
+      const { threadId, runId } = await createThreadAndRunGPT(fileId);
+      const result = await checkRunStatus(threadId, runId);
+
+      // Cleanup: Delete temp file
+      fs.unlinkSync(req.file.path);
+
+      res.status(200).json({ response: result });
+    } catch (error) {
+      console.error("❌ Error processing PDF:", error);
+      res.status(500).json({ error: error.message });
+    }
+  }
+);
+
 // File upload and summarization endpoint
 // app.post("/upload", upload.single("file"), async (req, res) => {
 //   console.log("Received /upload request at:", new Date().toISOString());
@@ -556,8 +591,6 @@ app.post("/upload", upload.single("file"), async (req, res) => {
     res.status(500).send("Error uploading file to Firebase Storage");
   }
 });
-
-
 
 const PORT = process.env.PORT || 5000;
 
