@@ -337,6 +337,65 @@ app.get("/api/getDocuments", async (req, res) => {
   }
 });
 
+app.get("/api/getTE", async (req, res) => {
+  try {
+    const pool = await sql.connect(config);
+    const result = await pool.request().query(`
+            SELECT Action_ID AS id, Actions AS text, 2016 AS Year, 'Action' AS Type FROM Actions_TE_2016
+      UNION ALL
+      SELECT Action_ID AS id, Actions AS text, 2017 AS Year, 'Action' AS Type FROM Actions_TE_2017
+      UNION ALL
+      SELECT Action_ID AS id, Actions AS text, 2018 AS Year, 'Action' AS Type FROM Actions_TE_2018
+      UNION ALL
+      SELECT Action_ID AS id, Actions AS text, 2019 AS Year, 'Action' AS Type FROM Actions_TE_2019
+      UNION ALL
+      SELECT Action_ID AS id, Actions AS text, 2020 AS Year, 'Action' AS Type FROM Actions_TE_2020
+      UNION ALL
+      SELECT Action_ID AS id, Actions AS text, 2021 AS Year, 'Action' AS Type FROM Actions_TE_2021
+      UNION ALL
+      SELECT Progress_ID AS id, Progress_Updates AS text, 2016 AS Year, 'Progress' AS Type FROM Progress_TE_2016
+      UNION ALL
+      SELECT Progress_ID AS id, Progress_Updates AS text, 2017 AS Year, 'Progress' AS Type FROM Progress_TE_2017
+      UNION ALL
+      SELECT Progress_ID AS id, Progress_Updates AS text, 2018 AS Year, 'Progress' AS Type FROM Progress_TE_2018
+      UNION ALL
+      SELECT Progress_ID AS id, Progress_Updates AS text, 2019 AS Year, 'Progress' AS Type FROM Progress_TE_2019
+      UNION ALL
+      SELECT Progress_ID AS id, Progress_Updates AS text, 2020 AS Year, 'Progress' AS Type FROM Progress_TE_2020
+      UNION ALL
+      SELECT Progress_ID AS id, Progress_Updates AS text, 2021 AS Year, 'Progress' AS Type FROM Progress_TE_2021
+      UNION ALL
+      SELECT Target_ID AS id, Target AS text, 2016 AS Year, 'Target' AS Type FROM Target_TE_2016
+      UNION ALL
+      SELECT Target_ID AS id, Target AS text, 2017 AS Year, 'Target' AS Type FROM Target_TE_2017
+      UNION ALL
+      SELECT Target_ID AS id, Target AS text, 2018 AS Year, 'Target' AS Type FROM Target_TE_2018
+      UNION ALL
+      SELECT Target_ID AS id, Target AS text, 2019 AS Year, 'Target' AS Type FROM Target_TE_2019
+      UNION ALL
+      SELECT Target_ID AS id, Target AS text, 2020 AS Year, 'Target' AS Type FROM Target_TE_2020
+      UNION ALL
+      SELECT Target_ID AS id, Target AS text, 2021 AS Year, 'Target' AS Type FROM Target_TE_2021
+      ORDER BY Year DESC;
+    `);
+
+    // Format data for frontend use
+    const funFacts = result.recordset.map((row) => ({
+      id: row.id,
+      text: row.text,
+      year: row.Year,
+      type: row.Type,
+    }));
+
+    res.send({ funFacts });
+  } catch (error) {
+    console.error("Error fetching data:", error);
+    res.status(500).send(error.message);
+  } finally {
+    sql.close();
+  }
+});
+
 // Endpoint to get unique company names
 app.get("/api/companies", async (req, res) => {
   try {
