@@ -199,45 +199,53 @@ useEffect(() => {
       console.log("Document added:", submitData);
 
       try {
+        const pages = [47,48,49,50]
+        let extractedMarkdown = "";
+        let answerText = "";
         // Step 1: Call /api/ocr to get the extracted markdown
-        const ocrResponse = await fetch(serverURL + '/api/ocr', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            documentUrl: 'https://totalenergies.com/system/files/documents/2024-03/totalenergies_sustainability-climate-2024-progress-report_2024_en_pdf.pdf' // URL of your document
-          })
-        });
-      
-        const ocrData = await ocrResponse.json();
-        console.log("ocrData: " + ocrData.markdown)
+        for (const page in pages){
+          const ocrResponse = await fetch(serverURL + '/api/ocr', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              documentUrl: 'https://www.omv.com/downloads/2024/11/e7bc7980-ebf2-881c-ca8c-db7897754d9c/omv-sustainability-report-2023.pdf',
+              pages : page
+            })
+          });
         
-        if (!ocrData || !ocrData.markdown) {
-          console.error('Error: No markdown data received from OCR. Response:', ocrData);
-          return;
+          const ocrData = await ocrResponse.json();
+          console.log("ocrData: " + ocrData.markdown)
+          
+          if (!ocrData || !ocrData.markdown) {
+            console.error('Error: No markdown data received from OCR. Response:', ocrData);
+            return;
+          }
+          extractedMarkdown += ocrData.markdown + "\n"; 
+          // Step 2: Call /api/chat with the extracted markdown and the desired question
+        const question = `Extract all data related to OMV's climate change initiatives and progress from the document's markdown text : ${ocrData.markdown}. Organize the information into two tables: one for achievements in 2023 with as much detail as provided in markdown text and another for planned initiatives for 2024 also with as much detail as possible. Each table should include the following categories: Carbon Emissions Reduction, Leak Detection and Repair, Energy Efficiency and Renewable Energy, Low- and Zero-Carbon Products, Carbon Capture and Storage, and Offsetting Emissions. Ensure that each row in the tables specifies the category, even if it is repetitive. Each entry should include the category, initiative, and its corresponding achievement or planned action.
+        `; // Your question here
+        
+          const answerResponse = await fetch(serverURL + '/api/chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              question: question,
+              markdownText: extractedMarkdown
+            })
+          });
+        
+          const answerData = await answerResponse.json();
+          answerText += answerData.answer + "\n";
         }
+        if (answerText) {
+          console.log('Answer:', answerText);
+        } else {
+          console.error('Error: No answer received from the question API. Response:', answerText);
+        }
+
       
         // Extracted markdown text
-        const extractedMarkdown = ocrData.markdown;
       
-        // Step 2: Call /api/chat with the extracted markdown and the desired question
-        const question = "Give me fun facts about sustainability initiatives based on the above text"; // Your question here
-      
-        const answerResponse = await fetch(serverURL + '/api/chat', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            question: question,
-            markdownText: extractedMarkdown
-          })
-        });
-      
-        const answerData = await answerResponse.json();
-        
-        if (answerData && answerData.answer) {
-          console.log('Answer:', answerData.answer);
-        } else {
-          console.error('Error: No answer received from the question API. Response:', answerData);
-        }
       
       } catch (error) {
         console.error('Error processing document or question:', error);

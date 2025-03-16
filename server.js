@@ -623,7 +623,7 @@ app.post('/api/ocr', async (req, res) => {
     return res.status(400).json({ message: 'API key is missing' });
   }
 
-  const { documentUrl } = req.body;
+  const { documentUrl, pages } = req.body;
 
   const body = JSON.stringify({
     model: "mistral-ocr-latest",
@@ -633,10 +633,10 @@ app.post('/api/ocr', async (req, res) => {
       document_url: documentUrl,
       document_name: "Example Document"
     },
-    pages: [4,5], // Process the first page; modify as needed
+    pages: [pages], 
     include_image_base64: true,
-    image_limit: 0,
-    image_min_size: 0
+    image_limit: null,
+    image_min_size: null
   });
 
   try {
@@ -656,7 +656,9 @@ app.post('/api/ocr', async (req, res) => {
     }
 
     const ocrResponse = await response.json();
-    const extractedText = ocrResponse.pages?.[0]?.markdown || "";
+    const extractedText = ocrResponse.pages
+  ? ocrResponse.pages.map(page => page.markdown || "").join("\n")
+  : "";
 
     if (!extractedText) {
       return res.status(400).json({ message: 'No text extracted from the document.' });
@@ -686,10 +688,11 @@ app.post('/api/chat', async (req, res) => {
     return res.status(400).json({ message: 'Both question and markdown text are required' });
   }
 
-  const prompt = `Based on the markdown ocr data :${markdownText}\n\n Answer this Question: ${question}`;
+  const prompt = `${question}`;
 
   const chatBody = {
     model: "mistral-small-latest", 
+    temperature: 0.2,
     messages: [
       { 
         role: "user", 
