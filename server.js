@@ -1,3 +1,4 @@
+
 const sql = require("mssql"); // Use mssql instead of mysql
 const config = require("./config.js");
 const express = require("express");
@@ -15,6 +16,64 @@ const { Client } = require("ssh2");
 const admin = require("firebase-admin"); // Firebase Admin SDK
 const multer = require("multer");
 const upload = multer({ dest: "uploads/" });
+const fetch = require('node-fetch'); // Install with: npm install node-fetch@2
+
+
+app.post('/api/answer-question', async (req, res) => {
+  console.log('Received request at /api/answer-question');
+  
+  const apiKey = process.env.MISTRAL_API_KEY;
+
+  if (!apiKey) {
+    return res.status(400).json({ message: 'API key is missing' });
+  }
+
+  const { question, markdownText } = req.body;
+
+  if (!markdownText || !question) {
+    return res.status(400).json({ message: 'Both question and markdown text are required' });
+  }
+
+  const prompt = `${markdownText}\n\nQuestion: ${question}`;
+
+  const chatBody = {
+    model: "mistral-small-latest", // Model name you want to use
+    messages: [
+      { 
+        role: "user", 
+        content: prompt
+      }
+    ]
+  };
+
+  const headers = {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${apiKey}`
+  };
+
+  try {
+    // Step 2: Call the Chat Model API
+    const chatResponse = await fetch('https://api.mistral.ai/v1/chat/completions', {
+      method: 'POST',
+      headers: headers,
+      body: JSON.stringify(chatBody)
+    });
+
+    if (!chatResponse.ok) {
+      const errorMessage = await chatResponse.text();
+      return res.status(chatResponse.status).json({ message: 'Error processing Chat Model', error: errorMessage });
+    }
+
+    const chatResult = await chatResponse.json();
+    const finalText = chatResult.choices?.[0]?.message?.content || "No response from chat model.";
+
+    res.json({ answer: finalText });
+
+  } catch (error) {
+    console.error('Chat Model Error:', error);
+    res.status(500).json({ message: 'Error processing Chat Model', error: error.message });
+  }
+});
 
 admin.initializeApp({
   credential: admin.credential.cert(
@@ -615,6 +674,120 @@ app.post("/upload", upload.single("file"), async (req, res) => {
     res.status(500).send("Error uploading file to Firebase Storage");
   }
 });
+
+app.post('/api/ocr', async (req, res) => {
+  const apiKey = process.env.MISTRAL_API_KEY;
+
+  if (!apiKey) {
+    return res.status(400).json({ message: 'API key is missing' });
+  }
+
+  const { documentUrl, pages } = req.body;
+
+  const body = JSON.stringify({
+    model: "mistral-ocr-latest",
+    id: "unique-request-id",
+    document: {
+      type: "document_url",
+      document_url: documentUrl,
+      document_name: "Example Document"
+    },
+    pages: [pages], 
+    include_image_base64: true,
+    image_limit: null,
+    image_min_size: null
+  });
+
+  try {
+    // Step 1: Call the OCR API
+    const response = await fetch('https://api.mistral.ai/v1/ocr', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`
+      },
+      body: body
+    });
+
+    if (!response.ok) {
+      const errorMessage = await response.text();
+      return res.status(response.status).json({ message: 'Error processing OCR', error: errorMessage });
+    }
+
+    const ocrResponse = await response.json();
+    const extractedText = ocrResponse.pages
+  ? ocrResponse.pages.map(page => page.markdown || "").join("\n")
+  : "";
+
+    if (!extractedText) {
+      return res.status(400).json({ message: 'No text extracted from the document.' });
+    }
+
+    // Return the cleaned markdown text
+    res.json({ markdown: extractedText });
+
+  } catch (error) {
+    console.error('OCR Error:', error);
+    res.status(500).json({ message: 'Error processing OCR', error: error.message });
+  }
+});
+
+app.post('/api/chat', async (req, res) => {
+  console.log('Received request at /api/answer-question');
+
+  const apiKey = process.env.MISTRAL_API_KEY;
+
+  if (!apiKey) {
+    return res.status(400).json({ message: 'API key is missing' });
+  }
+
+  const { question, markdownText } = req.body;
+
+  if (!markdownText || !question) {
+    return res.status(400).json({ message: 'Both question and markdown text are required' });
+  }
+
+  const prompt = `${question}`;
+
+  const chatBody = {
+    model: "mistral-small-latest", 
+    temperature: 0.2,
+    messages: [
+      { 
+        role: "user", 
+        content: prompt
+      }
+    ]
+  };
+
+  const headers = {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${apiKey}`
+  };
+
+  try {
+    const chatResponse = await fetch('https://api.mistral.ai/v1/chat/completions', {
+      method: 'POST',
+      headers: headers,
+      body: JSON.stringify(chatBody)
+    });
+
+    if (!chatResponse.ok) {
+      const errorMessage = await chatResponse.text();
+      return res.status(chatResponse.status).json({ message: 'Error processing Chat Model', error: errorMessage });
+    }
+
+    const chatResult = await chatResponse.json();
+    const finalText = chatResult.choices?.[0]?.message?.content || "No response from chat model.";
+
+    res.json({ answer: finalText });
+
+  } catch (error) {
+    console.error('Chat Model Error:', error);
+    res.status(500).json({ message: 'Error processing Chat Model', error: error.message });
+  }
+});
+
 
 
 
