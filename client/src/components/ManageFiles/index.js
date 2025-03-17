@@ -199,17 +199,17 @@ useEffect(() => {
       console.log("Document added:", submitData);
 
       try {
-        const pages = [47,48,49,50]
+        const pages = [50,51,52,53]
         let extractedMarkdown = "";
         let answerText = "";
         // Step 1: Call /api/ocr to get the extracted markdown
-        for (const page in pages){
+        for (let page = 50; page <= 54; page++) {
           const ocrResponse = await fetch(serverURL + '/api/ocr', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               documentUrl: 'https://www.omv.com/downloads/2024/11/e7bc7980-ebf2-881c-ca8c-db7897754d9c/omv-sustainability-report-2023.pdf',
-              pages : page
+              pages : [page]
             })
           });
         
@@ -222,7 +222,7 @@ useEffect(() => {
           }
           extractedMarkdown += ocrData.markdown + "\n"; 
           // Step 2: Call /api/chat with the extracted markdown and the desired question
-        const question = `Extract all data related to OMV's climate change initiatives and progress from the document's markdown text : ${ocrData.markdown}. Organize the information into two tables: one for achievements in 2023 with as much detail as provided in markdown text and another for planned initiatives for 2024 also with as much detail as possible. Each table should include the following categories: Carbon Emissions Reduction, Leak Detection and Repair, Energy Efficiency and Renewable Energy, Low- and Zero-Carbon Products, Carbon Capture and Storage, and Offsetting Emissions. Ensure that each row in the tables specifies the category, even if it is repetitive. Each entry should include the category, initiative, and its corresponding achievement or planned action.
+        const question = `Extract all data related to OMV's climate change initiatives and progress from the provided markdown text ${ocrData.markdown}. Organize the information into two JSON objects: one for cliamte change achievements and another for planned climate change initiatives for the future. Each JSON object should include categories such as the following categories: Carbon Emissions Reduction, Leak Detection and Repair, Energy Efficiency and Renewable Energy, Low- and Zero-Carbon Products, Carbon Capture and Storage, and Offsetting Emissions. Ensure that each entry in the JSON objects specifies the category, even if it is repetitive. Each entry should include the category, initiative, and its corresponding achievement or planned action with as much detail as possible. 
         `; // Your question here
         
           const answerResponse = await fetch(serverURL + '/api/chat', {

@@ -683,7 +683,7 @@ app.post('/api/ocr', async (req, res) => {
   }
 
   const { documentUrl, pages } = req.body;
-
+  console.log("Processing Page" + pages);
   const body = JSON.stringify({
     model: "mistral-ocr-latest",
     id: "unique-request-id",
@@ -692,7 +692,7 @@ app.post('/api/ocr', async (req, res) => {
       document_url: documentUrl,
       document_name: "Example Document"
     },
-    pages: [pages], 
+    pages: pages, 
     include_image_base64: true,
     image_limit: null,
     image_min_size: null
