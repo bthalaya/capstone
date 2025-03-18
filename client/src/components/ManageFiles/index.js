@@ -1,7 +1,7 @@
 import React, {useState, useEffect, useCallback} from "react";
 import {  InputAdornment, TextField, Button, MenuItem, Select, FormControl, InputLabel} from "@mui/material";
 import {  Dialog, DialogActions, DialogContent, DialogTitle } from "@mui/material";
-import { Search, ArrowDropDown, ArrowDropUp, } from "@mui/icons-material";
+import { Search, ArrowDropDown, ArrowDropUp, CommitOutlined, } from "@mui/icons-material";
 import { CloudUpload } from "@mui/icons-material";
 import { initializeApp } from "firebase/app";
 import { Notifications, Settings, AccountCircle } from "@mui/icons-material";
@@ -198,57 +198,485 @@ useEffect(() => {
       const submitData = await submitResponse.json();
       console.log("Document added:", submitData);
 
-      try {
-        const pages = [50,51,52,53]
-        let extractedMarkdown = "";
-        let answerText = "";
-        // Step 1: Call /api/ocr to get the extracted markdown
-        for (let page = 50; page <= 54; page++) {
-          const ocrResponse = await fetch(serverURL + '/api/ocr', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              documentUrl: 'https://www.omv.com/downloads/2024/11/e7bc7980-ebf2-881c-ca8c-db7897754d9c/omv-sustainability-report-2023.pdf',
-              pages : [page]
-            })
-          });
-        
-          const ocrData = await ocrResponse.json();
-          console.log("ocrData: " + ocrData.markdown)
+      if(companyName === "OMV" && reportName === "Sustainability Report"){
+        try {
+          let extractedMarkdown = "";
+          let answerText = "";
+          // Step 1: Call /api/ocr to get the extracted markdown
+          for (let page = 50; page <= 54; page++) {
+            const ocrResponse = await fetch(serverURL + '/api/ocr', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                documentUrl: documentURL,
+                pages : [page]
+              })
+            });
+            
+            const ocrData = await ocrResponse.json();
+            console.log("ocrData: " + ocrData.markdown)
+            
+            if (!ocrData || !ocrData.markdown) {
+              console.error('Error: No markdown data received from OCR. Response:', ocrData);
+              return;
+            }
+            extractedMarkdown += ocrData.markdown + "\n"; 
+            // Step 2: Call /api/chat with the extracted markdown and the desired question
+          const question = `Extract all data related to OMV's climate change initiatives and progress from the provided markdown text ${ocrData.markdown}. Organize the information into two JSON objects: one for cliamte change achievements and another for planned climate change initiatives for the future. Each JSON object should include categories such as the following categories: Carbon Emissions Reduction, Leak Detection and Repair, Energy Efficiency and Renewable Energy, Low- and Zero-Carbon Products, Carbon Capture and Storage, and Offsetting Emissions. Ensure that each entry in the JSON objects specifies the category, even if it is repetitive. Each entry should include the category, initiative, and its corresponding achievement or planned action with as much detail as possible. Format the response in a way that is easy to input into an SQL database, using a clear structure with fields for category, initiative, and details. 
+          `; // Your question here
           
-          if (!ocrData || !ocrData.markdown) {
-            console.error('Error: No markdown data received from OCR. Response:', ocrData);
-            return;
+            const answerResponse = await fetch(serverURL + '/api/chat', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                question: question,
+                markdownText: extractedMarkdown
+              })
+            });
+          
+            const answerData = await answerResponse.json();
+            answerText += answerData.answer + "\n";
           }
-          extractedMarkdown += ocrData.markdown + "\n"; 
-          // Step 2: Call /api/chat with the extracted markdown and the desired question
-        const question = `Extract all data related to OMV's climate change initiatives and progress from the provided markdown text ${ocrData.markdown}. Organize the information into two JSON objects: one for cliamte change achievements and another for planned climate change initiatives for the future. Each JSON object should include categories such as the following categories: Carbon Emissions Reduction, Leak Detection and Repair, Energy Efficiency and Renewable Energy, Low- and Zero-Carbon Products, Carbon Capture and Storage, and Offsetting Emissions. Ensure that each entry in the JSON objects specifies the category, even if it is repetitive. Each entry should include the category, initiative, and its corresponding achievement or planned action with as much detail as possible. 
-        `; // Your question here
+          if (answerText) {
+            console.log('Answer:', answerText);
+          } else {
+            console.error('Error: No answer received from the question API. Response:', answerText);
+          }
+  
         
-          const answerResponse = await fetch(serverURL + '/api/chat', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              question: question,
-              markdownText: extractedMarkdown
-            })
-          });
+          // Extracted markdown text
         
-          const answerData = await answerResponse.json();
-          answerText += answerData.answer + "\n";
+        
+        } catch (error) {
+          console.error('Error processing document or question:', error);
         }
-        if (answerText) {
-          console.log('Answer:', answerText);
-        } else {
-          console.error('Error: No answer received from the question API. Response:', answerText);
-        }
+      }
 
-      
-        // Extracted markdown text
-      
-      
-      } catch (error) {
-        console.error('Error processing document or question:', error);
+      if(companyName === "BP" && reportName === "Sustainability Report"){
+        try {
+          let extractedMarkdown = "";
+          let answerText = "";
+          // Step 1: Call /api/ocr to get the extracted markdown
+          for (let page = 50; page <= 54; page++) {
+            const ocrResponse = await fetch(serverURL + '/api/ocr', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                documentUrl: documentURL,
+                pages : [page]
+              })
+            });
+            
+            const ocrData = await ocrResponse.json();
+            console.log("ocrData: " + ocrData.markdown)
+            
+            if (!ocrData || !ocrData.markdown) {
+              console.error('Error: No markdown data received from OCR. Response:', ocrData);
+              return;
+            }
+            extractedMarkdown += ocrData.markdown + "\n"; 
+            // Step 2: Call /api/chat with the extracted markdown and the desired question
+          const question = `Extract all data related to OMV's climate change initiatives and progress from the provided markdown text ${ocrData.markdown}. Organize the information into two JSON objects: one for cliamte change achievements and another for planned climate change initiatives for the future. Each JSON object should include categories such as the following categories: Carbon Emissions Reduction, Leak Detection and Repair, Energy Efficiency and Renewable Energy, Low- and Zero-Carbon Products, Carbon Capture and Storage, and Offsetting Emissions. Ensure that each entry in the JSON objects specifies the category, even if it is repetitive. Each entry should include the category, initiative, and its corresponding achievement or planned action with as much detail as possible. Format the response in a way that is easy to input into an SQL database, using a clear structure with fields for category, initiative, and details. 
+          `; // Your question here
+          
+            const answerResponse = await fetch(serverURL + '/api/chat', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                question: question,
+                markdownText: extractedMarkdown
+              })
+            });
+          
+            const answerData = await answerResponse.json();
+            answerText += answerData.answer + "\n";
+          }
+          if (answerText) {
+            console.log('Answer:', answerText);
+          } else {
+            console.error('Error: No answer received from the question API. Response:', answerText);
+          }
+  
+        
+          // Extracted markdown text
+        
+        
+        } catch (error) {
+          console.error('Error processing document or question:', error);
+        }
+      }
+
+      if(companyName === "ENI" && reportName === "Sustainability Report"){
+        try {
+          let extractedMarkdown = "";
+          let answerText = "";
+          // Step 1: Call /api/ocr to get the extracted markdown
+          for (let page = 50; page <= 54; page++) {
+            const ocrResponse = await fetch(serverURL + '/api/ocr', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                documentUrl: documentURL,
+                pages : [page]
+              })
+            });
+            
+            const ocrData = await ocrResponse.json();
+            console.log("ocrData: " + ocrData.markdown)
+            
+            if (!ocrData || !ocrData.markdown) {
+              console.error('Error: No markdown data received from OCR. Response:', ocrData);
+              return;
+            }
+            extractedMarkdown += ocrData.markdown + "\n"; 
+            // Step 2: Call /api/chat with the extracted markdown and the desired question
+          const question = `Extract all data related to OMV's climate change initiatives and progress from the provided markdown text ${ocrData.markdown}. Organize the information into two JSON objects: one for cliamte change achievements and another for planned climate change initiatives for the future. Each JSON object should include categories such as the following categories: Carbon Emissions Reduction, Leak Detection and Repair, Energy Efficiency and Renewable Energy, Low- and Zero-Carbon Products, Carbon Capture and Storage, and Offsetting Emissions. Ensure that each entry in the JSON objects specifies the category, even if it is repetitive. Each entry should include the category, initiative, and its corresponding achievement or planned action with as much detail as possible. Format the response in a way that is easy to input into an SQL database, using a clear structure with fields for category, initiative, and details. 
+          `; // Your question here
+          
+            const answerResponse = await fetch(serverURL + '/api/chat', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                question: question,
+                markdownText: extractedMarkdown
+              })
+            });
+          
+            const answerData = await answerResponse.json();
+            answerText += answerData.answer + "\n";
+          }
+          if (answerText) {
+            console.log('Answer:', answerText);
+          } else {
+            console.error('Error: No answer received from the question API. Response:', answerText);
+          }
+  
+        
+          // Extracted markdown text
+        
+        
+        } catch (error) {
+          console.error('Error processing document or question:', error);
+        }
+      }
+
+      if(companyName === "Equinor" && reportName === "Sustainability Report"){
+        try {
+          let extractedMarkdown = "";
+          let answerText = "";
+          // Step 1: Call /api/ocr to get the extracted markdown
+          for (let page = 50; page <= 54; page++) {
+            const ocrResponse = await fetch(serverURL + '/api/ocr', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                documentUrl: documentURL,
+                pages : [page]
+              })
+            });
+            
+            const ocrData = await ocrResponse.json();
+            console.log("ocrData: " + ocrData.markdown)
+            
+            if (!ocrData || !ocrData.markdown) {
+              console.error('Error: No markdown data received from OCR. Response:', ocrData);
+              return;
+            }
+            extractedMarkdown += ocrData.markdown + "\n"; 
+            // Step 2: Call /api/chat with the extracted markdown and the desired question
+          const question = `Extract all data related to OMV's climate change initiatives and progress from the provided markdown text ${ocrData.markdown}. Organize the information into two JSON objects: one for cliamte change achievements and another for planned climate change initiatives for the future. Each JSON object should include categories such as the following categories: Carbon Emissions Reduction, Leak Detection and Repair, Energy Efficiency and Renewable Energy, Low- and Zero-Carbon Products, Carbon Capture and Storage, and Offsetting Emissions. Ensure that each entry in the JSON objects specifies the category, even if it is repetitive. Each entry should include the category, initiative, and its corresponding achievement or planned action with as much detail as possible. Format the response in a way that is easy to input into an SQL database, using a clear structure with fields for category, initiative, and details. 
+          `; // Your question here
+          
+            const answerResponse = await fetch(serverURL + '/api/chat', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                question: question,
+                markdownText: extractedMarkdown
+              })
+            });
+          
+            const answerData = await answerResponse.json();
+            answerText += answerData.answer + "\n";
+          }
+          if (answerText) {
+            console.log('Answer:', answerText);
+          } else {
+            console.error('Error: No answer received from the question API. Response:', answerText);
+          }
+  
+        
+          // Extracted markdown text
+        
+        
+        } catch (error) {
+          console.error('Error processing document or question:', error);
+        }
+      }
+
+      if(companyName === "Puma" && reportName === "Sustainability Report"){
+        try {
+          let extractedMarkdown = "";
+          let answerText = "";
+          // Step 1: Call /api/ocr to get the extracted markdown
+          for (let page = 50; page <= 54; page++) {
+            const ocrResponse = await fetch(serverURL + '/api/ocr', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                documentUrl: documentURL,
+                pages : [page]
+              })
+            });
+            
+            const ocrData = await ocrResponse.json();
+            console.log("ocrData: " + ocrData.markdown)
+            
+            if (!ocrData || !ocrData.markdown) {
+              console.error('Error: No markdown data received from OCR. Response:', ocrData);
+              return;
+            }
+            extractedMarkdown += ocrData.markdown + "\n"; 
+            // Step 2: Call /api/chat with the extracted markdown and the desired question
+          const question = `Extract all data related to OMV's climate change initiatives and progress from the provided markdown text ${ocrData.markdown}. Organize the information into two JSON objects: one for cliamte change achievements and another for planned climate change initiatives for the future. Each JSON object should include categories such as the following categories: Carbon Emissions Reduction, Leak Detection and Repair, Energy Efficiency and Renewable Energy, Low- and Zero-Carbon Products, Carbon Capture and Storage, and Offsetting Emissions. Ensure that each entry in the JSON objects specifies the category, even if it is repetitive. Each entry should include the category, initiative, and its corresponding achievement or planned action with as much detail as possible. Format the response in a way that is easy to input into an SQL database, using a clear structure with fields for category, initiative, and details. 
+          `; // Your question here
+          
+            const answerResponse = await fetch(serverURL + '/api/chat', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                question: question,
+                markdownText: extractedMarkdown
+              })
+            });
+          
+            const answerData = await answerResponse.json();
+            answerText += answerData.answer + "\n";
+          }
+          if (answerText) {
+            console.log('Answer:', answerText);
+          } else {
+            console.error('Error: No answer received from the question API. Response:', answerText);
+          }
+  
+        
+          // Extracted markdown text
+        
+        
+        } catch (error) {
+          console.error('Error processing document or question:', error);
+        }
+      }
+
+      if(companyName === "Repsol" && reportName === "Sustainability Report"){
+        try {
+          let extractedMarkdown = "";
+          let answerText = "";
+          // Step 1: Call /api/ocr to get the extracted markdown
+          for (let page = 50; page <= 54; page++) {
+            const ocrResponse = await fetch(serverURL + '/api/ocr', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                documentUrl: documentURL,
+                pages : [page]
+              })
+            });
+            
+            const ocrData = await ocrResponse.json();
+            console.log("ocrData: " + ocrData.markdown)
+            
+            if (!ocrData || !ocrData.markdown) {
+              console.error('Error: No markdown data received from OCR. Response:', ocrData);
+              return;
+            }
+            extractedMarkdown += ocrData.markdown + "\n"; 
+            // Step 2: Call /api/chat with the extracted markdown and the desired question
+          const question = `Extract all data related to OMV's climate change initiatives and progress from the provided markdown text ${ocrData.markdown}. Organize the information into two JSON objects: one for cliamte change achievements and another for planned climate change initiatives for the future. Each JSON object should include categories such as the following categories: Carbon Emissions Reduction, Leak Detection and Repair, Energy Efficiency and Renewable Energy, Low- and Zero-Carbon Products, Carbon Capture and Storage, and Offsetting Emissions. Ensure that each entry in the JSON objects specifies the category, even if it is repetitive. Each entry should include the category, initiative, and its corresponding achievement or planned action with as much detail as possible. Format the response in a way that is easy to input into an SQL database, using a clear structure with fields for category, initiative, and details. 
+          `; // Your question here
+          
+            const answerResponse = await fetch(serverURL + '/api/chat', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                question: question,
+                markdownText: extractedMarkdown
+              })
+            });
+          
+            const answerData = await answerResponse.json();
+            answerText += answerData.answer + "\n";
+          }
+          if (answerText) {
+            console.log('Answer:', answerText);
+          } else {
+            console.error('Error: No answer received from the question API. Response:', answerText);
+          }
+  
+        
+          // Extracted markdown text
+        
+        
+        } catch (error) {
+          console.error('Error processing document or question:', error);
+        }
+      }
+
+      if(companyName === "TotalEnergies" && reportName === "Sustainability Report"){
+        try {
+          let extractedMarkdown = "";
+          let answerText = "";
+          // Step 1: Call /api/ocr to get the extracted markdown
+          for (let page = 50; page <= 54; page++) {
+            const ocrResponse = await fetch(serverURL + '/api/ocr', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                documentUrl: documentURL,
+                pages : [page]
+              })
+            });
+            
+            const ocrData = await ocrResponse.json();
+            console.log("ocrData: " + ocrData.markdown)
+            
+            if (!ocrData || !ocrData.markdown) {
+              console.error('Error: No markdown data received from OCR. Response:', ocrData);
+              return;
+            }
+            extractedMarkdown += ocrData.markdown + "\n"; 
+            // Step 2: Call /api/chat with the extracted markdown and the desired question
+          const question = `Extract all data related to OMV's climate change initiatives and progress from the provided markdown text ${ocrData.markdown}. Organize the information into two JSON objects: one for cliamte change achievements and another for planned climate change initiatives for the future. Each JSON object should include categories such as the following categories: Carbon Emissions Reduction, Leak Detection and Repair, Energy Efficiency and Renewable Energy, Low- and Zero-Carbon Products, Carbon Capture and Storage, and Offsetting Emissions. Ensure that each entry in the JSON objects specifies the category, even if it is repetitive. Each entry should include the category, initiative, and its corresponding achievement or planned action with as much detail as possible. Format the response in a way that is easy to input into an SQL database, using a clear structure with fields for category, initiative, and details. 
+          `; // Your question here
+          
+            const answerResponse = await fetch(serverURL + '/api/chat', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                question: question,
+                markdownText: extractedMarkdown
+              })
+            });
+          
+            const answerData = await answerResponse.json();
+            answerText += answerData.answer + "\n";
+          }
+          if (answerText) {
+            console.log('Answer:', answerText);
+          } else {
+            console.error('Error: No answer received from the question API. Response:', answerText);
+          }
+  
+        
+          // Extracted markdown text
+        
+        
+        } catch (error) {
+          console.error('Error processing document or question:', error);
+        }
+      }
+
+      if(companyName === "Shell" && reportName === "Sustainability Report"){
+        try {
+          let extractedMarkdown = "";
+          let answerText = "";
+          // Step 1: Call /api/ocr to get the extracted markdown
+          for (let page = 50; page <= 54; page++) {
+            const ocrResponse = await fetch(serverURL + '/api/ocr', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                documentUrl: documentURL,
+                pages : [page]
+              })
+            });
+            
+            const ocrData = await ocrResponse.json();
+            console.log("ocrData: " + ocrData.markdown)
+            
+            if (!ocrData || !ocrData.markdown) {
+              console.error('Error: No markdown data received from OCR. Response:', ocrData);
+              return;
+            }
+            extractedMarkdown += ocrData.markdown + "\n"; 
+            // Step 2: Call /api/chat with the extracted markdown and the desired question
+          const question = `Extract all data related to OMV's climate change initiatives and progress from the provided markdown text ${ocrData.markdown}. Organize the information into two JSON objects: one for cliamte change achievements and another for planned climate change initiatives for the future. Each JSON object should include categories such as the following categories: Carbon Emissions Reduction, Leak Detection and Repair, Energy Efficiency and Renewable Energy, Low- and Zero-Carbon Products, Carbon Capture and Storage, and Offsetting Emissions. Ensure that each entry in the JSON objects specifies the category, even if it is repetitive. Each entry should include the category, initiative, and its corresponding achievement or planned action with as much detail as possible. Format the response in a way that is easy to input into an SQL database, using a clear structure with fields for category, initiative, and details. 
+          `; // Your question here
+          
+            const answerResponse = await fetch(serverURL + '/api/chat', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                question: question,
+                markdownText: extractedMarkdown
+              })
+            });
+          
+            const answerData = await answerResponse.json();
+            answerText += answerData.answer + "\n";
+          }
+          if (answerText) {
+            console.log('Answer:', answerText);
+          } else {
+            console.error('Error: No answer received from the question API. Response:', answerText);
+          }
+        } catch (error) {
+          console.error('Error processing document or question:', error);
+        }
+      }
+
+      if(companyName === "Cepsa" && reportName === "Sustainability Report"){
+        try {
+          let extractedMarkdown = "";
+          let answerText = "";
+          // Step 1: Call /api/ocr to get the extracted markdown
+          for (let page = 50; page <= 54; page++) {
+            const ocrResponse = await fetch(serverURL + '/api/ocr', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                documentUrl: documentURL,
+                pages : [page]
+              })
+            });
+            
+            const ocrData = await ocrResponse.json();
+            console.log("ocrData: " + ocrData.markdown)
+            
+            if (!ocrData || !ocrData.markdown) {
+              console.error('Error: No markdown data received from OCR. Response:', ocrData);
+              return;
+            }
+            extractedMarkdown += ocrData.markdown + "\n"; 
+            // Step 2: Call /api/chat with the extracted markdown and the desired question
+          const question = `Extract all data related to OMV's climate change initiatives and progress from the provided markdown text ${ocrData.markdown}. Organize the information into two JSON objects: one for cliamte change achievements and another for planned climate change initiatives for the future. Each JSON object should include categories such as the following categories: Carbon Emissions Reduction, Leak Detection and Repair, Energy Efficiency and Renewable Energy, Low- and Zero-Carbon Products, Carbon Capture and Storage, and Offsetting Emissions. Ensure that each entry in the JSON objects specifies the category, even if it is repetitive. Each entry should include the category, initiative, and its corresponding achievement or planned action with as much detail as possible. Format the response in a way that is easy to input into an SQL database, using a clear structure with fields for category, initiative, and details. 
+          `; // Your question here
+          
+            const answerResponse = await fetch(serverURL + '/api/chat', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                question: question,
+                markdownText: extractedMarkdown
+              })
+            });
+          
+            const answerData = await answerResponse.json();
+            answerText += answerData.answer + "\n";
+          }
+          if (answerText) {
+            console.log('Answer:', answerText);
+          } else {
+            console.error('Error: No answer received from the question API. Response:', answerText);
+          }
+  
+        
+          // Extracted markdown text
+        
+        
+        } catch (error) {
+          console.error('Error processing document or question:', error);
+        }
       }
   
       if (submitData.success) {
@@ -450,13 +878,32 @@ useEffect(() => {
       <Dialog open={openDialog} onClose={handleDialogClose}>
         <DialogTitle>Add New File</DialogTitle>
         <DialogContent>
-          <TextField
-            label="Company Name"
-            fullWidth
-            style={{ marginBottom: "1rem", marginTop: "0.5rem" }}
-            value={companyName}
-            onChange={(e) => setCompanyName(e.target.value)}
-          />
+        <FormControl fullWidth style={{ marginBottom: "1rem" }}>
+      <InputLabel id="company-name-label">Company Name</InputLabel>
+      <Select
+        labelId="company-name-label"
+        value={companyName}
+        onChange={(e) => setCompanyName(e.target.value)}
+      >
+        <MenuItem value="" disabled>Select a company</MenuItem>
+        {[
+          "BP",
+          "Cepsa",
+          "ENI",
+          "Equinor",
+          "OMV",
+          "Puma",
+          "Repsol",
+          "Shell",
+          "TotalEnergies",
+        ].map((company) => (
+          <MenuItem key={company} value={company}>
+            {company}
+          </MenuItem>
+        ))}
+      </Select>
+    </FormControl>
+
           <TextField
             label="Report Year"
             fullWidth
