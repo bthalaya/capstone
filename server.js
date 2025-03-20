@@ -19,61 +19,6 @@ const upload = multer({ dest: "uploads/" });
 const fetch = require('node-fetch'); // Install with: npm install node-fetch@2
 
 
-app.post('/api/answer-question', async (req, res) => {
-  console.log('Received request at /api/answer-question');
-  
-  const apiKey = process.env.MISTRAL_API_KEY;
-
-  if (!apiKey) {
-    return res.status(400).json({ message: 'API key is missing' });
-  }
-
-  const { question, markdownText } = req.body;
-
-  if (!markdownText || !question) {
-    return res.status(400).json({ message: 'Both question and markdown text are required' });
-  }
-
-  const prompt = `${markdownText}\n\nQuestion: ${question}`;
-
-  const chatBody = {
-    model: "mistral-small-latest", // Model name you want to use
-    messages: [
-      { 
-        role: "user", 
-        content: prompt
-      }
-    ]
-  };
-
-  const headers = {
-    'Content-Type': 'application/json',
-    'Authorization': `Bearer ${apiKey}`
-  };
-
-  try {
-    // Step 2: Call the Chat Model API
-    const chatResponse = await fetch('https://api.mistral.ai/v1/chat/completions', {
-      method: 'POST',
-      headers: headers,
-      body: JSON.stringify(chatBody)
-    });
-
-    if (!chatResponse.ok) {
-      const errorMessage = await chatResponse.text();
-      return res.status(chatResponse.status).json({ message: 'Error processing Chat Model', error: errorMessage });
-    }
-
-    const chatResult = await chatResponse.json();
-    const finalText = chatResult.choices?.[0]?.message?.content || "No response from chat model.";
-
-    res.json({ answer: finalText });
-
-  } catch (error) {
-    console.error('Chat Model Error:', error);
-    res.status(500).json({ message: 'Error processing Chat Model', error: error.message });
-  }
-});
 
 admin.initializeApp({
   credential: admin.credential.cert(
@@ -788,6 +733,107 @@ app.post('/api/chat', async (req, res) => {
   }
 });
 
+app.post("/api/insertActions", async (req, res) => {
+  const { companyName, report_year, companyData, ID } = req.body;
+  const tableName = `capstone.dbo.Fun_Facts_${companyName}`;
+  let pool;
+
+  try {
+    // Connect to the database
+    pool = await sql.connect(config);
+    const request = new sql.Request(pool);
+
+    // Insert the action into the dynamically named table
+    await request
+      .input('ID', sql.Int, ID)                          // Using action ID
+      .input('Fact', sql.VarChar(256), companyData)      // The action itself
+      .input('Type', sql.VarChar(50), 'Action')          // Type will always be "Action"
+      .input('Year', sql.Int, report_year)               // The report year
+      .query(`
+        INSERT INTO ${tableName} (ID, Fact, [Type], [Year])
+        VALUES (@ID, @Fact, @Type, @Year)
+      `);
+
+    res.json({ success: true, message: "Action added successfully." });
+
+  } catch (error) {
+    console.error("Error inserting action:", error);
+    res.status(500).json({ success: false, message: "Server error." });
+  } finally {
+    // Ensure the connection is only closed when everything is done
+    if (pool) {
+      pool.close();  // Only close if pool was successfully created
+    }
+  }
+});
+
+app.post("/api/insertProgress", async (req, res) => {
+  const { companyName, report_year, companyData, ID } = req.body;
+  const tableName = `capstone.dbo.Fun_Facts_${companyName}`;
+  let pool;
+
+  try {
+    // Connect to the database
+    pool = await sql.connect(config);
+    const request = new sql.Request(pool);
+
+    // Insert the action into the dynamically named table
+    await request
+      .input('ID', sql.Int, ID)                          // Using action ID
+      .input('Fact', sql.VarChar(256), companyData)      // The action itself
+      .input('Type', sql.VarChar(50), 'Progress')          // Type will always be "Action"
+      .input('Year', sql.Int, report_year)               // The report year
+      .query(`
+        INSERT INTO ${tableName} (ID, Fact, [Type], [Year])
+        VALUES (@ID, @Fact, @Type, @Year)
+      `);
+
+    res.json({ success: true, message: "Progress added successfully." });
+
+  } catch (error) {
+    console.error("Error inserting Progress:", error);
+    res.status(500).json({ success: false, message: "Server error." });
+  } finally {
+    // Ensure the connection is only closed when everything is done
+    if (pool) {
+      pool.close();  // Only close if pool was successfully created
+    }
+  }
+});
+
+app.post("/api/insertTargets", async (req, res) => {
+  const { companyName, report_year, companyData, ID } = req.body;
+  const tableName = `capstone.dbo.Fun_Facts_${companyName}`;
+  let pool;
+
+  try {
+    // Connect to the database
+    pool = await sql.connect(config);
+    const request = new sql.Request(pool);
+
+    // Insert the action into the dynamically named table
+    await request
+      .input('ID', sql.Int, ID)                          // Using action ID
+      .input('Fact', sql.VarChar(256), companyData)      // The action itself
+      .input('Type', sql.VarChar(50), 'Target')          // Type will always be "Action"
+      .input('Year', sql.Int, report_year)               // The report year
+      .query(`
+        INSERT INTO ${tableName} (ID, Fact, [Type], [Year])
+        VALUES (@ID, @Fact, @Type, @Year)
+      `);
+
+    res.json({ success: true, message: "Target added successfully." });
+
+  } catch (error) {
+    console.error("Error inserting Target:", error);
+    res.status(500).json({ success: false, message: "Server error." });
+  } finally {
+    // Ensure the connection is only closed when everything is done
+    if (pool) {
+      pool.close();  // Only close if pool was successfully created
+    }
+  }
+});
 
 
 
