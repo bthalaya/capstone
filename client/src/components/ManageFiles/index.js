@@ -27,9 +27,12 @@ import { Typography } from "@mui/material";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 import store from "../../store";
 import { useHistory } from "react-router-dom";
-import "@fontsource/lato"; // Ensure this is added
+import "@fontsource/lato";
+import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { uploadPdf } from "./openaiService";
 
 const serverURL = "http://localhost:5000"; // Your server URL
+const OPENAI_API_KEY = process.env.REACT_APP_OPENAI_API_KEY; // Load from .env.local
 
 // Initialize Firebase
 const firebaseConfig = {
@@ -62,6 +65,8 @@ const ManageFiles = () => {
   const [filteredDocuments, setFilteredDocuments] = useState(data);
   const history = useHistory();
   const [value, setValue] = React.useState(0);
+  const [localFile, setLocalFile] = useState(null);
+  const [fileURL, setFileURL] = useState("");
 
   useEffect(() => {
     loadDocuments();
@@ -77,6 +82,17 @@ const ManageFiles = () => {
     history.push(`${newValue}`);
     console.log(newValue);
     setValue(newValue);
+  };
+
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    setLocalFile(file); // Store file in state
+
+    // Create a local object URL to preview the file
+    const url = URL.createObjectURL(file);
+    setFileURL(url);
   };
 
   const loadApiGetProfiles = async () => {
@@ -173,6 +189,43 @@ const ManageFiles = () => {
   const handleDialogClose = () => setOpenDialog(false);
 
   const handleSubmit = async () => {
+    if (!localFile) {
+      alert("Please select a file before submitting.");
+      return;
+    }
+
+    const storage = getStorage();
+    const fileRef = ref(
+      storage,
+      `uploads/${companyName}_${reportYear}_${reportName}.pdf`
+    );
+
+    let firebaseFileURL = "";
+    try {
+      // ✅ Step 1: Upload to Firebase Storage
+      const snapshot = await uploadBytes(fileRef, localFile);
+      console.log("📂 Uploaded to Firebase:", snapshot);
+
+      // ✅ Step 2: Get the Firebase URL
+      const firebaseFileURL = await getDownloadURL(fileRef);
+      console.log("🔗 File available at:", firebaseFileURL);
+
+      // ✅ Step 3: Upload the actual file to OpenAI for processing
+      try {
+        console.log("🚀 Uploading file to OpenAI for summarization...");
+        await uploadPdf(localFile);
+        alert("File uploaded & sent to OpenAI successfully! ✅");
+      } catch (error) {
+        console.error("OpenAI file upload failed:", error);
+        alert("Failed to summarize file.");
+      }
+
+      // alert("File uploaded & sent to OpenAI successfully! ✅");
+    } catch (error) {
+      console.error("Error uploading file:", error);
+      alert("File upload failed.");
+    }
+
     // Step 1: Check if the document exists in the system
     const checkResponse = await fetch(serverURL + "/api/checkDocument", {
       method: "POST",
@@ -221,7 +274,7 @@ const ManageFiles = () => {
       console.log("Document added:", submitData);
 
       //i removed/hardcoded for testing purposes u can change it back
-      if (companyName === "OMV" && reportName === "Sustainability Report") {
+      if (companyName === "OMV") {
         try {
           let extractedMarkdown = "";
           let companyData = { OMV: {} };
@@ -231,7 +284,7 @@ const ManageFiles = () => {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
-                documentUrl:documentURL,
+                documentUrl: documentURL,
                 pages: [page],
               }),
             });
@@ -315,28 +368,33 @@ DO NOT give any additional details other than just the JSON object, to be clear 
               const progressArray = parsedAnswer.Progress;
               const targetsArray = parsedAnswer.Targets; // Extracting Actions array
 
-              for (const action of actionsArray) {  
-
+              for (const action of actionsArray) {
                 const actions = {
                   companyName: companyName,
                   report_year: reportYear,
-                  companyData:action.Action,
-                  ID: action.Action_ID // Send each action as an array with a single element
+                  companyData: action.Action,
+                  ID: action.Action_ID, // Send each action as an array with a single element
                 };
-                
+
                 // Making the API call for each action
                 try {
-                  const submitActions = await fetch(serverURL + "/api/insertActions", {
-                    method: "POST",
-                    headers: {
-                      "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify(actions),
-                  });
+                  const submitActions = await fetch(
+                    serverURL + "/api/insertActions",
+                    {
+                      method: "POST",
+                      headers: {
+                        "Content-Type": "application/json",
+                      },
+                      body: JSON.stringify(actions),
+                    }
+                  );
 
                   const submitData = await submitActions.json();
                   if (submitData.success) {
-                    console.log("Action added successfully:", submitData.message);
+                    console.log(
+                      "Action added successfully:",
+                      submitData.message
+                    );
                   } else {
                     console.error("Failed to add action:", submitData.message);
                   }
@@ -345,58 +403,71 @@ DO NOT give any additional details other than just the JSON object, to be clear 
                 }
               }
 
-              for (const item of progressArray) {  
-
+              for (const item of progressArray) {
                 const progress = {
                   companyName: companyName,
                   report_year: reportYear,
-                  companyData:item.Progress,
-                  ID: item.Progress_ID // Send each action as an array with a single element
+                  companyData: item.Progress,
+                  ID: item.Progress_ID, // Send each action as an array with a single element
                 };
-                
+
                 // Making the API call for each action
                 try {
-                  const submitActions = await fetch(serverURL + "/api/insertProgress", {
-                    method: "POST",
-                    headers: {
-                      "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify(progress),
-                  });
+                  const submitActions = await fetch(
+                    serverURL + "/api/insertProgress",
+                    {
+                      method: "POST",
+                      headers: {
+                        "Content-Type": "application/json",
+                      },
+                      body: JSON.stringify(progress),
+                    }
+                  );
 
                   const submitData = await submitActions.json();
                   if (submitData.success) {
-                    console.log("progress added successfully:", submitData.message);
+                    console.log(
+                      "progress added successfully:",
+                      submitData.message
+                    );
                   } else {
-                    console.error("Failed to add progress:", submitData.message);
+                    console.error(
+                      "Failed to add progress:",
+                      submitData.message
+                    );
                   }
                 } catch (error) {
                   console.error("Error in API call:", error);
                 }
               }
 
-              for (const item of targetsArray) {  
-
+              for (const item of targetsArray) {
                 const targets = {
                   companyName: companyName,
                   report_year: reportYear,
-                  companyData:item.Target,
-                  ID: item.Target_ID // Send each action as an array with a single element
+                  companyData: item.Target,
+                  ID: item.Target_ID, // Send each action as an array with a single element
                 };
-                
+
                 // Making the API call for each action
                 try {
-                  const submitActions = await fetch(serverURL + "/api/insertTargets", {
-                    method: "POST",
-                    headers: {
-                      "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify(targets),
-                  });
+                  const submitActions = await fetch(
+                    serverURL + "/api/insertTargets",
+                    {
+                      method: "POST",
+                      headers: {
+                        "Content-Type": "application/json",
+                      },
+                      body: JSON.stringify(targets),
+                    }
+                  );
 
                   const submitData = await submitActions.json();
                   if (submitData.success) {
-                    console.log("targets added successfully:", submitData.message);
+                    console.log(
+                      "targets added successfully:",
+                      submitData.message
+                    );
                   } else {
                     console.error("Failed to add targets:", submitData.message);
                   }
@@ -408,13 +479,9 @@ DO NOT give any additional details other than just the JSON object, to be clear 
               console.error(`🚨 JSON Parsing Error on Page ${page}:`, error);
             }
           }
-
-
-          
         } catch (error) {
           console.error("Error processing document or question:", error);
         }
-        
       }
 
       if (companyName === "BP" && reportName === "Sustainability Report") {
@@ -1142,7 +1209,6 @@ DO NOT give any additional details other than just the JSON object, to be clear 
               ))}
             </Select>
           </FormControl>
-
           <TextField
             label="Report Year"
             fullWidth
@@ -1164,11 +1230,50 @@ DO NOT give any additional details other than just the JSON object, to be clear 
             value={documentURL}
             onChange={(e) => setDocumentURL(e.target.value)}
           />
-          <input
+          {/* <input
             type="file"
             onChange={(e) => setFile(e.target.files[0])}
             style={{ marginBottom: "1rem" }}
+          /> */}
+          {/* File Input */}
+          <input
+            type="file"
+            accept="application/pdf"
+            onChange={handleFileChange}
+            style={{ marginBottom: "1rem" }}
           />
+          {/* PDF Preview (Only show if file is selected) */}
+          {fileURL && (
+            <iframe
+              src={fileURL}
+              width="100%"
+              height="400px"
+              title="PDF Preview"
+              style={{
+                border: "1px solid #ccc",
+                borderRadius: "5px",
+                marginTop: "1rem",
+              }}
+            ></iframe>
+          )}
+          /* Download PDF Button */
+          {fileURL && (
+            <a href={fileURL} download="uploaded-file.pdf">
+              <button
+                style={{
+                  marginTop: "1rem",
+                  padding: "0.5rem 1rem",
+                  backgroundColor: "#7F9E50",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "5px",
+                  cursor: "pointer",
+                }}
+              >
+                Download PDF
+              </button>
+            </a>
+          )}
         </DialogContent>
         <DialogActions>
           <Button onClick={handleDialogClose} color="primary">

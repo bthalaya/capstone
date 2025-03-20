@@ -1,4 +1,3 @@
-
 const sql = require("mssql"); // Use mssql instead of mysql
 const config = require("./config.js");
 const express = require("express");
@@ -13,21 +12,11 @@ require("dotenv").config();
 const app = express();
 const port = process.env.PORT || 5000;
 const { Client } = require("ssh2");
-const admin = require("firebase-admin"); // Firebase Admin SDK
 const multer = require("multer");
-const upload = multer({ dest: "uploads/" });
-const fetch = require('node-fetch'); // Install with: npm install node-fetch@2
+const fetch = require("node-fetch"); // Install with: npm install node-fetch@2
+const { uploadPdfToOpenAI, summarizeFile } = require("./openaiHelper");
 
-
-
-admin.initializeApp({
-  credential: admin.credential.cert(
-    require("./capstone-bca8d-firebase-adminsdk-wrfn0-f8005f8ac0.json")
-  ),
-  storageBucket: "capstone-bca8d.firebasestorage.app", // This should match the bucket URL in Firebase Console
-});
-
-console.log("Firebase bucket initialized:", admin.storage().bucket().name);
+const upload = multer({ dest: "uploads/" }); // Temporary storage for files
 
 app.use(bodyParser.json({ limit: "50mb" }));
 app.use(express.json());
@@ -91,6 +80,34 @@ app.get("/api/get-file-paths", (req, res) => {
     .connect(sshConfig);
 });
 
+app.post("/api/uploadToOpenAI", upload.single("file"), async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ error: "No file uploaded" });
+
+    const filePath = req.file.path;
+    const fileBuffer = fs.readFileSync(filePath);
+    const fileName = req.file.originalname;
+
+    console.log("📄 Uploading to OpenAI:", fileName);
+
+    const fileId = await uploadPdfToOpenAI(fileBuffer, fileName);
+    fs.unlinkSync(filePath); // Remove the temp file after upload
+
+    if (!fileId)
+      return res.status(500).json({ error: "Failed to upload to OpenAI" });
+
+    // Get the summary
+    const summary = await summarizeFile(fileId);
+    if (!summary)
+      return res.status(500).json({ error: "Failed to summarize PDF" });
+
+    res.json({ success: true, summary });
+  } catch (error) {
+    console.error("❌ Error:", error);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
 // Keep loadUserSettings API
 app.post("/api/loadUserSettings", async (req, res) => {
   try {
@@ -110,39 +127,43 @@ app.post("/api/loadUserSettings", async (req, res) => {
   }
 });
 
-app.post('/api/addProfile', async (req, res) => {
+app.post("/api/addProfile", async (req, res) => {
   try {
     const pool = await sql.connect(config);
-    const { first_name, last_name, email_address, username, password } = req.body;
+    const { first_name, last_name, email_address, username, password } =
+      req.body;
 
     // Check if the username already exists
     const result = await pool
       .request()
-      .input('username', sql.VarChar, username).query('SELECT * FROM users WHERE username = @username');
+      .input("username", sql.VarChar, username)
+      .query("SELECT * FROM users WHERE username = @username");
     if (result.recordset.length > 0) {
-      return res.status(400).send({ success: false, message: 'Username already exists' });
+      return res
+        .status(400)
+        .send({ success: false, message: "Username already exists" });
     }
-    
+
     // Insert the new user
     await pool
       .request()
-      .input('first_name', sql.NVarChar, first_name)
-      .input('last_name', sql.NVarChar, last_name)
-      .input('email_address', sql.VarChar, email_address)
-      .input('username', sql.VarChar, username)
-      .input('password', sql.VarChar, password).query(`
+      .input("first_name", sql.NVarChar, first_name)
+      .input("last_name", sql.NVarChar, last_name)
+      .input("email_address", sql.VarChar, email_address)
+      .input("username", sql.VarChar, username)
+      .input("password", sql.VarChar, password).query(`
         INSERT INTO users (first_name, last_name, email_address, username, password)
         VALUES (@first_name, @last_name, @email_address, @username, @password)
       `);
-    
+
     res.send({ success: true });
   } catch (err) {
     console.error(err);
-    res.status(500).send({ success: false, message: 'Error registering user' });
+    res.status(500).send({ success: false, message: "Error registering user" });
   }
 });
 
-app.post('/api/login', async (req, res) => {
+app.post("/api/login", async (req, res) => {
   try {
     const pool = await sql.connect(config);
     const { username, password } = req.body;
@@ -150,8 +171,8 @@ app.post('/api/login', async (req, res) => {
     // Query the database for the user with the provided credentials
     const result = await pool
       .request()
-      .input('username', sql.VarChar, username)
-      .input('password', sql.VarChar, password).query(`
+      .input("username", sql.VarChar, username)
+      .input("password", sql.VarChar, password).query(`
         SELECT * FROM users
         WHERE username = @username 
           AND password = @password
@@ -165,13 +186,15 @@ app.post('/api/login', async (req, res) => {
     }
   } catch (err) {
     console.error(err);
-    res.status(500).send({ error: 'Error checking user credentials in the database.' });
+    res
+      .status(500)
+      .send({ error: "Error checking user credentials in the database." });
   } finally {
     sql.close();
   }
 });
 
-app.get('/api/getProfile', async (req, res) => {
+app.get("/api/getProfile", async (req, res) => {
   try {
     const pool = await sql.connect(config);
     const { username } = req.query;
@@ -179,8 +202,7 @@ app.get('/api/getProfile', async (req, res) => {
     // Query the database for the user by username
     const result = await pool
       .request()
-      .input('username', sql.NVarChar, username)
-      .query(`
+      .input("username", sql.NVarChar, username).query(`
         SELECT * 
         FROM capstone.dbo.users
         WHERE username = @username
@@ -190,16 +212,15 @@ app.get('/api/getProfile', async (req, res) => {
     if (result.recordset.length > 0) {
       res.status(200).send({ profile: result.recordset[0] });
     } else {
-      res.status(404).send({ message: 'User not found' });
+      res.status(404).send({ message: "User not found" });
     }
   } catch (error) {
     console.error(error.message);
-    res.status(500).send({ error: 'Failed to fetch profile' });
+    res.status(500).send({ error: "Failed to fetch profile" });
   } finally {
     sql.close();
   }
 });
-
 
 // New endpoint to add a document
 app.post("/api/addDocument", async (req, res) => {
@@ -471,160 +492,11 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-// File upload and summarization endpoint
-// app.post("/upload", upload.single("file"), async (req, res) => {
-//   console.log("Received /upload request at:", new Date().toISOString());
-
-//   try {
-//     if (!req.file) {
-//       console.log("No file received");
-//       return res.status(400).send("No file uploaded");
-//     }
-
-//     console.log("File received:", req.file);
-//     console.log("Received /upload request at:", new Date().toISOString());
-
-//     // Get the file's local path
-//     const localFilePath = req.file.path;
-//     const fileName = `${Date.now()}_${req.file.originalname}`; // Unique file name
-//     console.log(
-//       "Uploading file to Firebase destination:",
-//       `uploads/${fileName}`
-//     );
-
-//     // Step 1: Upload the file to Firebase Storage
-//     let publicUrl;
-//     try {
-//       const [firebaseFile] = await bucket.upload(localFilePath, {
-//         destination: `uploads/${fileName}`, // Destination in Firebase
-//         metadata: {
-//           contentType: req.file.mimetype, // Set MIME type
-//         },
-//       });
-
-//       // Generate a public URL for the uploaded file
-//       publicUrl = `https://storage.googleapis.com/${bucket.name}/${firebaseFile.name}`;
-//       console.log(
-//         "File uploaded to Firebase successfully. Public URL:",
-//         publicUrl
-//       );
-
-//       // Cleanup: Delete the temporary local file
-//       fs.unlinkSync(localFilePath);
-//     } catch (firebaseError) {
-//       console.error("Error uploading to Firebase:", firebaseError);
-//       return res.status(500).send("Error uploading file to Firebase Storage");
-//     }
-
-//     // Step 2: Proceed with OpenAI processing
-//     const { filePath } = req.body; // Get filePath from the request body
-//     if (!filePath) {
-//       return res.status(400).send("File path is required");
-//     }
-
-//     console.log("File path received from frontend:", filePath);
-
-//     const assistant = await openai.beta.assistants.create({
-//       name: "Financial Analyst Assistant",
-//       instructions:
-//         "You are an expert at analyzing files, what are the first words in the file? Look very hard",
-//       model: "gpt-4-turbo-preview",
-//       tools: [{ type: "file_search" }],
-//     });
-
-//     const financeDoc = await openai.files.create({
-//       file: fs.createReadStream(filePath),
-//       purpose: "assistants",
-//     });
-
-//     const thread = await openai.beta.threads.create({
-//       messages: [
-//         {
-//           role: "user",
-//           content: "Summarize the document",
-//           attachments: [
-//             { file_id: financeDoc.id, tools: [{ type: "file_search" }] },
-//           ],
-//         },
-//       ],
-//     });
-
-//     if (thread && thread.id) {
-//       const stream = openai.beta.threads.runs
-//         .stream(thread.id, { assistant_id: assistant.id })
-//         .on("textCreated", () => console.log("assistant >"))
-//         .on("toolCallCreated", (event) =>
-//           console.log("assistant " + event.type)
-//         )
-//         .on("messageDone", async (event) => {
-//           if (event.content[0].type === "text") {
-//             const { text } = event.content[0];
-//             console.log("OpenAI Output:", text.value);
-
-//             // Respond with OpenAI summary and Firebase URL
-//             res.status(200).json({
-//               openaiSummary: text.value,
-//               firebaseUrl: publicUrl,
-//             });
-//           }
-//         });
-//     } else {
-//       console.error("Thread ID is missing");
-//       res.status(500).send("Error processing file with OpenAI");
-//     }
-//   } catch (error) {
-//     console.error("Error:", error);
-//     res.status(500).send("Error uploading or processing the file");
-//   }
-// });
-
-// Define the bucket outside of your endpoint to use it globally
-const bucket = admin.storage().bucket();
-app.post("/upload", upload.single("file"), async (req, res) => {
-  console.log("Received /upload request at:", new Date().toISOString());
-
-  if (!req.file) {
-    console.error("No file received");
-    return res.status(400).send("No file uploaded");
-  }
-
-  console.log("File received:", req.file);
-
-  const localFilePath = req.file.path;
-  const fileName = `${Date.now()}_${req.file.originalname}`;
-  console.log("Preparing to upload file:", fileName);
-  console.log("Local path:", localFilePath);
-
-  try {
-    const firebaseFile = await bucket.upload(localFilePath, {
-      destination: `uploads/${fileName}`,
-      metadata: { contentType: req.file.mimetype },
-    });
-
-    console.log("Firebase File Uploaded:", firebaseFile);
-    // Correct format for Firebase Storage URLs
-    const publicUrl = `https://firebasestorage.googleapis.com/v0/b/${
-      bucket.name
-    }/o/${encodeURIComponent(firebaseFile[0].name)}?alt=media`;
-
-    console.log(
-      "File uploaded to Firebase successfully. Public URL:",
-      publicUrl
-    );
-
-    fs.unlinkSync(localFilePath); // Clean up local file
-    res.status(200).json({ publicUrl: publicUrl });
-  } catch (error) {
-    console.error("Error uploading to Firebase:", error);
-    res.status(500).send("Error uploading file to Firebase Storage");
-  }
-});
-
-app.post('/api/ocr', async (req, res) => {
+app.post("/api/ocr", async (req, res) => {
   const apiKey = process.env.MISTRAL_API_KEY;
 
   if (!apiKey) {
-    return res.status(400).json({ message: 'API key is missing' });
+    return res.status(400).json({ message: "API key is missing" });
   }
 
   const { documentUrl, pages } = req.body;
@@ -635,101 +507,116 @@ app.post('/api/ocr', async (req, res) => {
     document: {
       type: "document_url",
       document_url: documentUrl,
-      document_name: "Example Document"
+      document_name: "Example Document",
     },
-    pages: pages, 
+    pages: pages,
     include_image_base64: true,
     image_limit: null,
-    image_min_size: null
+    image_min_size: null,
   });
 
   try {
     // Step 1: Call the OCR API
-    const response = await fetch('https://api.mistral.ai/v1/ocr', {
-      method: 'POST',
+    const response = await fetch("https://api.mistral.ai/v1/ocr", {
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apiKey}`,
       },
-      body: body
+      body: body,
     });
 
     if (!response.ok) {
       const errorMessage = await response.text();
-      return res.status(response.status).json({ message: 'Error processing OCR', error: errorMessage });
+      return res
+        .status(response.status)
+        .json({ message: "Error processing OCR", error: errorMessage });
     }
 
     const ocrResponse = await response.json();
     const extractedText = ocrResponse.pages
-  ? ocrResponse.pages.map(page => page.markdown || "").join("\n")
-  : "";
+      ? ocrResponse.pages.map((page) => page.markdown || "").join("\n")
+      : "";
 
     if (!extractedText) {
-      return res.status(400).json({ message: 'No text extracted from the document.' });
+      return res
+        .status(400)
+        .json({ message: "No text extracted from the document." });
     }
 
     // Return the cleaned markdown text
     res.json({ markdown: extractedText });
-
   } catch (error) {
-    console.error('OCR Error:', error);
-    res.status(500).json({ message: 'Error processing OCR', error: error.message });
+    console.error("OCR Error:", error);
+    res
+      .status(500)
+      .json({ message: "Error processing OCR", error: error.message });
   }
 });
 
-app.post('/api/chat', async (req, res) => {
-  console.log('Received request at /api/answer-question');
+app.post("/api/chat", async (req, res) => {
+  console.log("Received request at /api/answer-question");
 
   const apiKey = process.env.MISTRAL_API_KEY;
 
   if (!apiKey) {
-    return res.status(400).json({ message: 'API key is missing' });
+    return res.status(400).json({ message: "API key is missing" });
   }
 
   const { question, markdownText } = req.body;
 
   if (!markdownText || !question) {
-    return res.status(400).json({ message: 'Both question and markdown text are required' });
+    return res
+      .status(400)
+      .json({ message: "Both question and markdown text are required" });
   }
 
   const prompt = `${question}`;
 
   const chatBody = {
-    model: "mistral-small-latest", 
+    model: "mistral-small-latest",
     temperature: 0.2,
     messages: [
-      { 
-        role: "user", 
-        content: prompt
-      }
-    ]
+      {
+        role: "user",
+        content: prompt,
+      },
+    ],
   };
 
   const headers = {
-    'Content-Type': 'application/json',
-    'Authorization': `Bearer ${apiKey}`
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${apiKey}`,
   };
 
   try {
-    const chatResponse = await fetch('https://api.mistral.ai/v1/chat/completions', {
-      method: 'POST',
-      headers: headers,
-      body: JSON.stringify(chatBody)
-    });
+    const chatResponse = await fetch(
+      "https://api.mistral.ai/v1/chat/completions",
+      {
+        method: "POST",
+        headers: headers,
+        body: JSON.stringify(chatBody),
+      }
+    );
 
     if (!chatResponse.ok) {
       const errorMessage = await chatResponse.text();
-      return res.status(chatResponse.status).json({ message: 'Error processing Chat Model', error: errorMessage });
+      return res
+        .status(chatResponse.status)
+        .json({ message: "Error processing Chat Model", error: errorMessage });
     }
 
     const chatResult = await chatResponse.json();
-    const finalText = chatResult.choices?.[0]?.message?.content || "No response from chat model.";
+    const finalText =
+      chatResult.choices?.[0]?.message?.content ||
+      "No response from chat model.";
 
     res.json({ answer: finalText });
-
   } catch (error) {
-    console.error('Chat Model Error:', error);
-    res.status(500).json({ message: 'Error processing Chat Model', error: error.message });
+    console.error("Chat Model Error:", error);
+    res
+      .status(500)
+      .json({ message: "Error processing Chat Model", error: error.message });
   }
 });
 
@@ -745,24 +632,23 @@ app.post("/api/insertActions", async (req, res) => {
 
     // Insert the action into the dynamically named table
     await request
-      .input('ID', sql.Int, ID)                          // Using action ID
-      .input('Fact', sql.VarChar(256), companyData)      // The action itself
-      .input('Type', sql.VarChar(50), 'Action')          // Type will always be "Action"
-      .input('Year', sql.Int, report_year)               // The report year
+      .input("ID", sql.Int, ID) // Using action ID
+      .input("Fact", sql.VarChar(256), companyData) // The action itself
+      .input("Type", sql.VarChar(50), "Action") // Type will always be "Action"
+      .input("Year", sql.Int, report_year) // The report year
       .query(`
         INSERT INTO ${tableName} (ID, Fact, [Type], [Year])
         VALUES (@ID, @Fact, @Type, @Year)
       `);
 
     res.json({ success: true, message: "Action added successfully." });
-
   } catch (error) {
     console.error("Error inserting action:", error);
     res.status(500).json({ success: false, message: "Server error." });
   } finally {
     // Ensure the connection is only closed when everything is done
     if (pool) {
-      pool.close();  // Only close if pool was successfully created
+      pool.close(); // Only close if pool was successfully created
     }
   }
 });
@@ -779,24 +665,23 @@ app.post("/api/insertProgress", async (req, res) => {
 
     // Insert the action into the dynamically named table
     await request
-      .input('ID', sql.Int, ID)                          // Using action ID
-      .input('Fact', sql.VarChar(256), companyData)      // The action itself
-      .input('Type', sql.VarChar(50), 'Progress')          // Type will always be "Action"
-      .input('Year', sql.Int, report_year)               // The report year
+      .input("ID", sql.Int, ID) // Using action ID
+      .input("Fact", sql.VarChar(256), companyData) // The action itself
+      .input("Type", sql.VarChar(50), "Progress") // Type will always be "Action"
+      .input("Year", sql.Int, report_year) // The report year
       .query(`
         INSERT INTO ${tableName} (ID, Fact, [Type], [Year])
         VALUES (@ID, @Fact, @Type, @Year)
       `);
 
     res.json({ success: true, message: "Progress added successfully." });
-
   } catch (error) {
     console.error("Error inserting Progress:", error);
     res.status(500).json({ success: false, message: "Server error." });
   } finally {
     // Ensure the connection is only closed when everything is done
     if (pool) {
-      pool.close();  // Only close if pool was successfully created
+      pool.close(); // Only close if pool was successfully created
     }
   }
 });
@@ -813,29 +698,26 @@ app.post("/api/insertTargets", async (req, res) => {
 
     // Insert the action into the dynamically named table
     await request
-      .input('ID', sql.Int, ID)                          // Using action ID
-      .input('Fact', sql.VarChar(256), companyData)      // The action itself
-      .input('Type', sql.VarChar(50), 'Target')          // Type will always be "Action"
-      .input('Year', sql.Int, report_year)               // The report year
+      .input("ID", sql.Int, ID) // Using action ID
+      .input("Fact", sql.VarChar(256), companyData) // The action itself
+      .input("Type", sql.VarChar(50), "Target") // Type will always be "Action"
+      .input("Year", sql.Int, report_year) // The report year
       .query(`
         INSERT INTO ${tableName} (ID, Fact, [Type], [Year])
         VALUES (@ID, @Fact, @Type, @Year)
       `);
 
     res.json({ success: true, message: "Target added successfully." });
-
   } catch (error) {
     console.error("Error inserting Target:", error);
     res.status(500).json({ success: false, message: "Server error." });
   } finally {
     // Ensure the connection is only closed when everything is done
     if (pool) {
-      pool.close();  // Only close if pool was successfully created
+      pool.close(); // Only close if pool was successfully created
     }
   }
 });
-
-
 
 const PORT = process.env.PORT || 5000;
 
