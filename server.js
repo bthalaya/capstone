@@ -621,7 +621,7 @@ app.post("/api/chat", async (req, res) => {
 });
 
 app.post("/api/insertActions", async (req, res) => {
-  const { companyName, report_year, companyData, ID } = req.body;
+  const { companyName, report_year, companyData} = req.body;
   const tableName = `capstone.dbo.Fun_Facts_${companyName}`;
   let pool;
 
@@ -632,7 +632,6 @@ app.post("/api/insertActions", async (req, res) => {
 
     // Insert the action into the dynamically named table
     await request
-      .input("ID", sql.Int, ID) // Using action ID
       .input("Fact", sql.VarChar(256), companyData) // The action itself
       .input("Type", sql.VarChar(50), "Action") // Type will always be "Action"
       .input("Year", sql.Int, report_year) // The report year
@@ -654,7 +653,7 @@ app.post("/api/insertActions", async (req, res) => {
 });
 
 app.post("/api/insertProgress", async (req, res) => {
-  const { companyName, report_year, companyData, ID } = req.body;
+  const { companyName, report_year, companyData} = req.body;
   const tableName = `capstone.dbo.Fun_Facts_${companyName}`;
   let pool;
 
@@ -664,8 +663,7 @@ app.post("/api/insertProgress", async (req, res) => {
     const request = new sql.Request(pool);
 
     // Insert the action into the dynamically named table
-    await request
-      .input("ID", sql.Int, ID) // Using action ID
+    await request // Using action ID
       .input("Fact", sql.VarChar(256), companyData) // The action itself
       .input("Type", sql.VarChar(50), "Progress") // Type will always be "Action"
       .input("Year", sql.Int, report_year) // The report year
@@ -687,7 +685,7 @@ app.post("/api/insertProgress", async (req, res) => {
 });
 
 app.post("/api/insertTargets", async (req, res) => {
-  const { companyName, report_year, companyData, ID } = req.body;
+  const { companyName, report_year, companyData } = req.body;
   const tableName = `capstone.dbo.Fun_Facts_${companyName}`;
   let pool;
 
@@ -697,8 +695,7 @@ app.post("/api/insertTargets", async (req, res) => {
     const request = new sql.Request(pool);
 
     // Insert the action into the dynamically named table
-    await request
-      .input("ID", sql.Int, ID) // Using action ID
+    await request // Using action ID
       .input("Fact", sql.VarChar(256), companyData) // The action itself
       .input("Type", sql.VarChar(50), "Target") // Type will always be "Action"
       .input("Year", sql.Int, report_year) // The report year

@@ -277,7 +277,6 @@ const ManageFiles = () => {
       if (companyName === "OMV") {
         try {
           let extractedMarkdown = "";
-          let companyData = { OMV: {} };
           // Step 1: Call /api/ocr to get the extracted markdown
           for (let page = 50; page <= 50; page++) {
             const ocrResponse = await fetch(serverURL + "/api/ocr", {
@@ -349,7 +348,6 @@ DO NOT give any additional details other than just the JSON object, to be clear 
             // const answerData = await answerResponse.json();
             // answerText += answerData.answer + "\n";
             const answerData = await answerResponse.json();
-            // console.log(`Extracted JSON for Page ${page}:`, answerData);
 
             if (!answerData || !answerData.answer) {
               console.error(`No answer received for Page ${page}. Skipping...`);
@@ -372,8 +370,7 @@ DO NOT give any additional details other than just the JSON object, to be clear 
                 const actions = {
                   companyName: companyName,
                   report_year: reportYear,
-                  companyData: action.Action,
-                  ID: action.Action_ID, // Send each action as an array with a single element
+                  companyData: action.Action// Send each action as an array with a single element
                 };
 
                 // Making the API call for each action
@@ -407,8 +404,7 @@ DO NOT give any additional details other than just the JSON object, to be clear 
                 const progress = {
                   companyName: companyName,
                   report_year: reportYear,
-                  companyData: item.Progress,
-                  ID: item.Progress_ID, // Send each action as an array with a single element
+                  companyData: item.Progress // Send each action as an array with a single element
                 };
 
                 // Making the API call for each action
@@ -445,8 +441,7 @@ DO NOT give any additional details other than just the JSON object, to be clear 
                 const targets = {
                   companyName: companyName,
                   report_year: reportYear,
-                  companyData: item.Target,
-                  ID: item.Target_ID, // Send each action as an array with a single element
+                  companyData: item.Target// Send each action as an array with a single element
                 };
 
                 // Making the API call for each action
@@ -487,7 +482,6 @@ DO NOT give any additional details other than just the JSON object, to be clear 
       if (companyName === "BP" && reportName === "Sustainability Report") {
         try {
           let extractedMarkdown = "";
-          let answerText = "";
           // Step 1: Call /api/ocr to get the extracted markdown
           for (let page = 50; page <= 54; page++) {
             const ocrResponse = await fetch(serverURL + "/api/ocr", {
@@ -510,9 +504,8 @@ DO NOT give any additional details other than just the JSON object, to be clear 
               return;
             }
             extractedMarkdown += ocrData.markdown + "\n";
-            // Step 2: Call /api/chat with the extracted markdown and the desired question
             const question = `Extract all data related to OMV's climate change initiatives and progress from the provided markdown text ${ocrData.markdown}. Organize the information into two JSON objects: one for cliamte change achievements and another for planned climate change initiatives for the future. Each JSON object should include categories such as the following categories: Carbon Emissions Reduction, Leak Detection and Repair, Energy Efficiency and Renewable Energy, Low- and Zero-Carbon Products, Carbon Capture and Storage, and Offsetting Emissions. Ensure that each entry in the JSON objects specifies the category, even if it is repetitive. Each entry should include the category, initiative, and its corresponding achievement or planned action with as much detail as possible. Format the response in a way that is easy to input into an SQL database, using a clear structure with fields for category, initiative, and details. 
-          `; // Your question here
+          `; 
 
             const answerResponse = await fetch(serverURL + "/api/chat", {
               method: "POST",
@@ -524,18 +517,131 @@ DO NOT give any additional details other than just the JSON object, to be clear 
             });
 
             const answerData = await answerResponse.json();
-            answerText += answerData.answer + "\n";
-          }
-          if (answerText) {
-            console.log("Answer:", answerText);
-          } else {
-            console.error(
-              "Error: No answer received from the question API. Response:",
-              answerText
-            );
-          }
 
-          // Extracted markdown text
+            if (!answerData || !answerData.answer) {
+              console.error(`No answer received for Page ${page}. Skipping...`);
+              continue;
+            }
+
+            const cleanedAnswer = answerData.answer
+              .replace(/```json\n?/, "")
+              .replace(/\n?```/, "");
+
+            try {
+              const parsedAnswer = JSON.parse(cleanedAnswer);
+
+              const actionsArray = parsedAnswer.Actions;
+              const progressArray = parsedAnswer.Progress;
+              const targetsArray = parsedAnswer.Targets; // Extracting Actions array
+
+              for (const action of actionsArray) {
+                const actions = {
+                  companyName: companyName,
+                  report_year: reportYear,
+                  companyData: action.Action// Send each action as an array with a single element
+                };
+
+                // Making the API call for each action
+                try {
+                  const submitActions = await fetch(
+                    serverURL + "/api/insertActions",
+                    {
+                      method: "POST",
+                      headers: {
+                        "Content-Type": "application/json",
+                      },
+                      body: JSON.stringify(actions),
+                    }
+                  );
+
+                  const submitData = await submitActions.json();
+                  if (submitData.success) {
+                    console.log(
+                      "Action added successfully:",
+                      submitData.message
+                    );
+                  } else {
+                    console.error("Failed to add action:", submitData.message);
+                  }
+                } catch (error) {
+                  console.error("Error in API call:", error);
+                }
+              }
+
+              for (const item of progressArray) {
+                const progress = {
+                  companyName: companyName,
+                  report_year: reportYear,
+                  companyData: item.Progress // Send each action as an array with a single element
+                };
+
+                // Making the API call for each action
+                try {
+                  const submitActions = await fetch(
+                    serverURL + "/api/insertProgress",
+                    {
+                      method: "POST",
+                      headers: {
+                        "Content-Type": "application/json",
+                      },
+                      body: JSON.stringify(progress),
+                    }
+                  );
+
+                  const submitData = await submitActions.json();
+                  if (submitData.success) {
+                    console.log(
+                      "progress added successfully:",
+                      submitData.message
+                    );
+                  } else {
+                    console.error(
+                      "Failed to add progress:",
+                      submitData.message
+                    );
+                  }
+                } catch (error) {
+                  console.error("Error in API call:", error);
+                }
+              }
+
+              for (const item of targetsArray) {
+                const targets = {
+                  companyName: companyName,
+                  report_year: reportYear,
+                  companyData: item.Target// Send each action as an array with a single element
+                };
+
+                // Making the API call for each action
+                try {
+                  const submitActions = await fetch(
+                    serverURL + "/api/insertTargets",
+                    {
+                      method: "POST",
+                      headers: {
+                        "Content-Type": "application/json",
+                      },
+                      body: JSON.stringify(targets),
+                    }
+                  );
+
+                  const submitData = await submitActions.json();
+                  if (submitData.success) {
+                    console.log(
+                      "targets added successfully:",
+                      submitData.message
+                    );
+                  } else {
+                    console.error("Failed to add targets:", submitData.message);
+                  }
+                } catch (error) {
+                  console.error("Error in API call:", error);
+                }
+              }
+            } catch (error) {
+              console.error(`🚨 JSON Parsing Error on Page ${page}:`, error);
+            }
+          }
         } catch (error) {
           console.error("Error processing document or question:", error);
         }
@@ -581,18 +687,131 @@ DO NOT give any additional details other than just the JSON object, to be clear 
             });
 
             const answerData = await answerResponse.json();
-            answerText += answerData.answer + "\n";
-          }
-          if (answerText) {
-            console.log("Answer:", answerText);
-          } else {
-            console.error(
-              "Error: No answer received from the question API. Response:",
-              answerText
-            );
-          }
 
-          // Extracted markdown text
+            if (!answerData || !answerData.answer) {
+              console.error(`No answer received for Page ${page}. Skipping...`);
+              continue;
+            }
+
+            const cleanedAnswer = answerData.answer
+              .replace(/```json\n?/, "")
+              .replace(/\n?```/, "");
+
+            try {
+              const parsedAnswer = JSON.parse(cleanedAnswer);
+
+              const actionsArray = parsedAnswer.Actions;
+              const progressArray = parsedAnswer.Progress;
+              const targetsArray = parsedAnswer.Targets; // Extracting Actions array
+
+              for (const action of actionsArray) {
+                const actions = {
+                  companyName: companyName,
+                  report_year: reportYear,
+                  companyData: action.Action// Send each action as an array with a single element
+                };
+
+                // Making the API call for each action
+                try {
+                  const submitActions = await fetch(
+                    serverURL + "/api/insertActions",
+                    {
+                      method: "POST",
+                      headers: {
+                        "Content-Type": "application/json",
+                      },
+                      body: JSON.stringify(actions),
+                    }
+                  );
+
+                  const submitData = await submitActions.json();
+                  if (submitData.success) {
+                    console.log(
+                      "Action added successfully:",
+                      submitData.message
+                    );
+                  } else {
+                    console.error("Failed to add action:", submitData.message);
+                  }
+                } catch (error) {
+                  console.error("Error in API call:", error);
+                }
+              }
+
+              for (const item of progressArray) {
+                const progress = {
+                  companyName: companyName,
+                  report_year: reportYear,
+                  companyData: item.Progress // Send each action as an array with a single element
+                };
+
+                // Making the API call for each action
+                try {
+                  const submitActions = await fetch(
+                    serverURL + "/api/insertProgress",
+                    {
+                      method: "POST",
+                      headers: {
+                        "Content-Type": "application/json",
+                      },
+                      body: JSON.stringify(progress),
+                    }
+                  );
+
+                  const submitData = await submitActions.json();
+                  if (submitData.success) {
+                    console.log(
+                      "progress added successfully:",
+                      submitData.message
+                    );
+                  } else {
+                    console.error(
+                      "Failed to add progress:",
+                      submitData.message
+                    );
+                  }
+                } catch (error) {
+                  console.error("Error in API call:", error);
+                }
+              }
+
+              for (const item of targetsArray) {
+                const targets = {
+                  companyName: companyName,
+                  report_year: reportYear,
+                  companyData: item.Target// Send each action as an array with a single element
+                };
+
+                // Making the API call for each action
+                try {
+                  const submitActions = await fetch(
+                    serverURL + "/api/insertTargets",
+                    {
+                      method: "POST",
+                      headers: {
+                        "Content-Type": "application/json",
+                      },
+                      body: JSON.stringify(targets),
+                    }
+                  );
+
+                  const submitData = await submitActions.json();
+                  if (submitData.success) {
+                    console.log(
+                      "targets added successfully:",
+                      submitData.message
+                    );
+                  } else {
+                    console.error("Failed to add targets:", submitData.message);
+                  }
+                } catch (error) {
+                  console.error("Error in API call:", error);
+                }
+              }
+            } catch (error) {
+              console.error(`🚨 JSON Parsing Error on Page ${page}:`, error);
+            }
+          }
         } catch (error) {
           console.error("Error processing document or question:", error);
         }
@@ -638,18 +857,131 @@ DO NOT give any additional details other than just the JSON object, to be clear 
             });
 
             const answerData = await answerResponse.json();
-            answerText += answerData.answer + "\n";
-          }
-          if (answerText) {
-            console.log("Answer:", answerText);
-          } else {
-            console.error(
-              "Error: No answer received from the question API. Response:",
-              answerText
-            );
-          }
 
-          // Extracted markdown text
+            if (!answerData || !answerData.answer) {
+              console.error(`No answer received for Page ${page}. Skipping...`);
+              continue;
+            }
+
+            const cleanedAnswer = answerData.answer
+              .replace(/```json\n?/, "")
+              .replace(/\n?```/, "");
+
+            try {
+              const parsedAnswer = JSON.parse(cleanedAnswer);
+
+              const actionsArray = parsedAnswer.Actions;
+              const progressArray = parsedAnswer.Progress;
+              const targetsArray = parsedAnswer.Targets; // Extracting Actions array
+
+              for (const action of actionsArray) {
+                const actions = {
+                  companyName: companyName,
+                  report_year: reportYear,
+                  companyData: action.Action// Send each action as an array with a single element
+                };
+
+                // Making the API call for each action
+                try {
+                  const submitActions = await fetch(
+                    serverURL + "/api/insertActions",
+                    {
+                      method: "POST",
+                      headers: {
+                        "Content-Type": "application/json",
+                      },
+                      body: JSON.stringify(actions),
+                    }
+                  );
+
+                  const submitData = await submitActions.json();
+                  if (submitData.success) {
+                    console.log(
+                      "Action added successfully:",
+                      submitData.message
+                    );
+                  } else {
+                    console.error("Failed to add action:", submitData.message);
+                  }
+                } catch (error) {
+                  console.error("Error in API call:", error);
+                }
+              }
+
+              for (const item of progressArray) {
+                const progress = {
+                  companyName: companyName,
+                  report_year: reportYear,
+                  companyData: item.Progress // Send each action as an array with a single element
+                };
+
+                // Making the API call for each action
+                try {
+                  const submitActions = await fetch(
+                    serverURL + "/api/insertProgress",
+                    {
+                      method: "POST",
+                      headers: {
+                        "Content-Type": "application/json",
+                      },
+                      body: JSON.stringify(progress),
+                    }
+                  );
+
+                  const submitData = await submitActions.json();
+                  if (submitData.success) {
+                    console.log(
+                      "progress added successfully:",
+                      submitData.message
+                    );
+                  } else {
+                    console.error(
+                      "Failed to add progress:",
+                      submitData.message
+                    );
+                  }
+                } catch (error) {
+                  console.error("Error in API call:", error);
+                }
+              }
+
+              for (const item of targetsArray) {
+                const targets = {
+                  companyName: companyName,
+                  report_year: reportYear,
+                  companyData: item.Target// Send each action as an array with a single element
+                };
+
+                // Making the API call for each action
+                try {
+                  const submitActions = await fetch(
+                    serverURL + "/api/insertTargets",
+                    {
+                      method: "POST",
+                      headers: {
+                        "Content-Type": "application/json",
+                      },
+                      body: JSON.stringify(targets),
+                    }
+                  );
+
+                  const submitData = await submitActions.json();
+                  if (submitData.success) {
+                    console.log(
+                      "targets added successfully:",
+                      submitData.message
+                    );
+                  } else {
+                    console.error("Failed to add targets:", submitData.message);
+                  }
+                } catch (error) {
+                  console.error("Error in API call:", error);
+                }
+              }
+            } catch (error) {
+              console.error(`🚨 JSON Parsing Error on Page ${page}:`, error);
+            }
+          }
         } catch (error) {
           console.error("Error processing document or question:", error);
         }
@@ -695,18 +1027,131 @@ DO NOT give any additional details other than just the JSON object, to be clear 
             });
 
             const answerData = await answerResponse.json();
-            answerText += answerData.answer + "\n";
-          }
-          if (answerText) {
-            console.log("Answer:", answerText);
-          } else {
-            console.error(
-              "Error: No answer received from the question API. Response:",
-              answerText
-            );
-          }
 
-          // Extracted markdown text
+            if (!answerData || !answerData.answer) {
+              console.error(`No answer received for Page ${page}. Skipping...`);
+              continue;
+            }
+
+            const cleanedAnswer = answerData.answer
+              .replace(/```json\n?/, "")
+              .replace(/\n?```/, "");
+
+            try {
+              const parsedAnswer = JSON.parse(cleanedAnswer);
+
+              const actionsArray = parsedAnswer.Actions;
+              const progressArray = parsedAnswer.Progress;
+              const targetsArray = parsedAnswer.Targets; // Extracting Actions array
+
+              for (const action of actionsArray) {
+                const actions = {
+                  companyName: companyName,
+                  report_year: reportYear,
+                  companyData: action.Action// Send each action as an array with a single element
+                };
+
+                // Making the API call for each action
+                try {
+                  const submitActions = await fetch(
+                    serverURL + "/api/insertActions",
+                    {
+                      method: "POST",
+                      headers: {
+                        "Content-Type": "application/json",
+                      },
+                      body: JSON.stringify(actions),
+                    }
+                  );
+
+                  const submitData = await submitActions.json();
+                  if (submitData.success) {
+                    console.log(
+                      "Action added successfully:",
+                      submitData.message
+                    );
+                  } else {
+                    console.error("Failed to add action:", submitData.message);
+                  }
+                } catch (error) {
+                  console.error("Error in API call:", error);
+                }
+              }
+
+              for (const item of progressArray) {
+                const progress = {
+                  companyName: companyName,
+                  report_year: reportYear,
+                  companyData: item.Progress // Send each action as an array with a single element
+                };
+
+                // Making the API call for each action
+                try {
+                  const submitActions = await fetch(
+                    serverURL + "/api/insertProgress",
+                    {
+                      method: "POST",
+                      headers: {
+                        "Content-Type": "application/json",
+                      },
+                      body: JSON.stringify(progress),
+                    }
+                  );
+
+                  const submitData = await submitActions.json();
+                  if (submitData.success) {
+                    console.log(
+                      "progress added successfully:",
+                      submitData.message
+                    );
+                  } else {
+                    console.error(
+                      "Failed to add progress:",
+                      submitData.message
+                    );
+                  }
+                } catch (error) {
+                  console.error("Error in API call:", error);
+                }
+              }
+
+              for (const item of targetsArray) {
+                const targets = {
+                  companyName: companyName,
+                  report_year: reportYear,
+                  companyData: item.Target// Send each action as an array with a single element
+                };
+
+                // Making the API call for each action
+                try {
+                  const submitActions = await fetch(
+                    serverURL + "/api/insertTargets",
+                    {
+                      method: "POST",
+                      headers: {
+                        "Content-Type": "application/json",
+                      },
+                      body: JSON.stringify(targets),
+                    }
+                  );
+
+                  const submitData = await submitActions.json();
+                  if (submitData.success) {
+                    console.log(
+                      "targets added successfully:",
+                      submitData.message
+                    );
+                  } else {
+                    console.error("Failed to add targets:", submitData.message);
+                  }
+                } catch (error) {
+                  console.error("Error in API call:", error);
+                }
+              }
+            } catch (error) {
+              console.error(`🚨 JSON Parsing Error on Page ${page}:`, error);
+            }
+          }
         } catch (error) {
           console.error("Error processing document or question:", error);
         }
@@ -752,27 +1197,136 @@ DO NOT give any additional details other than just the JSON object, to be clear 
             });
 
             const answerData = await answerResponse.json();
-            answerText += answerData.answer + "\n";
-          }
-          if (answerText) {
-            console.log("Answer:", answerText);
-          } else {
-            console.error(
-              "Error: No answer received from the question API. Response:",
-              answerText
-            );
-          }
 
-          // Extracted markdown text
+            if (!answerData || !answerData.answer) {
+              console.error(`No answer received for Page ${page}. Skipping...`);
+              continue;
+            }
+
+            const cleanedAnswer = answerData.answer
+              .replace(/```json\n?/, "")
+              .replace(/\n?```/, "");
+
+            try {
+              const parsedAnswer = JSON.parse(cleanedAnswer);
+
+              const actionsArray = parsedAnswer.Actions;
+              const progressArray = parsedAnswer.Progress;
+              const targetsArray = parsedAnswer.Targets; // Extracting Actions array
+
+              for (const action of actionsArray) {
+                const actions = {
+                  companyName: companyName,
+                  report_year: reportYear,
+                  companyData: action.Action// Send each action as an array with a single element
+                };
+
+                // Making the API call for each action
+                try {
+                  const submitActions = await fetch(
+                    serverURL + "/api/insertActions",
+                    {
+                      method: "POST",
+                      headers: {
+                        "Content-Type": "application/json",
+                      },
+                      body: JSON.stringify(actions),
+                    }
+                  );
+
+                  const submitData = await submitActions.json();
+                  if (submitData.success) {
+                    console.log(
+                      "Action added successfully:",
+                      submitData.message
+                    );
+                  } else {
+                    console.error("Failed to add action:", submitData.message);
+                  }
+                } catch (error) {
+                  console.error("Error in API call:", error);
+                }
+              }
+
+              for (const item of progressArray) {
+                const progress = {
+                  companyName: companyName,
+                  report_year: reportYear,
+                  companyData: item.Progress // Send each action as an array with a single element
+                };
+
+                // Making the API call for each action
+                try {
+                  const submitActions = await fetch(
+                    serverURL + "/api/insertProgress",
+                    {
+                      method: "POST",
+                      headers: {
+                        "Content-Type": "application/json",
+                      },
+                      body: JSON.stringify(progress),
+                    }
+                  );
+
+                  const submitData = await submitActions.json();
+                  if (submitData.success) {
+                    console.log(
+                      "progress added successfully:",
+                      submitData.message
+                    );
+                  } else {
+                    console.error(
+                      "Failed to add progress:",
+                      submitData.message
+                    );
+                  }
+                } catch (error) {
+                  console.error("Error in API call:", error);
+                }
+              }
+
+              for (const item of targetsArray) {
+                const targets = {
+                  companyName: companyName,
+                  report_year: reportYear,
+                  companyData: item.Target// Send each action as an array with a single element
+                };
+
+                // Making the API call for each action
+                try {
+                  const submitActions = await fetch(
+                    serverURL + "/api/insertTargets",
+                    {
+                      method: "POST",
+                      headers: {
+                        "Content-Type": "application/json",
+                      },
+                      body: JSON.stringify(targets),
+                    }
+                  );
+
+                  const submitData = await submitActions.json();
+                  if (submitData.success) {
+                    console.log(
+                      "targets added successfully:",
+                      submitData.message
+                    );
+                  } else {
+                    console.error("Failed to add targets:", submitData.message);
+                  }
+                } catch (error) {
+                  console.error("Error in API call:", error);
+                }
+              }
+            } catch (error) {
+              console.error(`🚨 JSON Parsing Error on Page ${page}:`, error);
+            }
+          }
         } catch (error) {
           console.error("Error processing document or question:", error);
         }
       }
-
-      if (
-        companyName === "TotalEnergies" &&
-        reportName === "Sustainability Report"
-      ) {
+      if (companyName === "TotalEnergies" && reportName === "Sustainability Report") {
         try {
           let extractedMarkdown = "";
           let answerText = "";
@@ -812,18 +1366,131 @@ DO NOT give any additional details other than just the JSON object, to be clear 
             });
 
             const answerData = await answerResponse.json();
-            answerText += answerData.answer + "\n";
-          }
-          if (answerText) {
-            console.log("Answer:", answerText);
-          } else {
-            console.error(
-              "Error: No answer received from the question API. Response:",
-              answerText
-            );
-          }
 
-          // Extracted markdown text
+            if (!answerData || !answerData.answer) {
+              console.error(`No answer received for Page ${page}. Skipping...`);
+              continue;
+            }
+
+            const cleanedAnswer = answerData.answer
+              .replace(/```json\n?/, "")
+              .replace(/\n?```/, "");
+
+            try {
+              const parsedAnswer = JSON.parse(cleanedAnswer);
+
+              const actionsArray = parsedAnswer.Actions;
+              const progressArray = parsedAnswer.Progress;
+              const targetsArray = parsedAnswer.Targets; // Extracting Actions array
+
+              for (const action of actionsArray) {
+                const actions = {
+                  companyName: companyName,
+                  report_year: reportYear,
+                  companyData: action.Action// Send each action as an array with a single element
+                };
+
+                // Making the API call for each action
+                try {
+                  const submitActions = await fetch(
+                    serverURL + "/api/insertActions",
+                    {
+                      method: "POST",
+                      headers: {
+                        "Content-Type": "application/json",
+                      },
+                      body: JSON.stringify(actions),
+                    }
+                  );
+
+                  const submitData = await submitActions.json();
+                  if (submitData.success) {
+                    console.log(
+                      "Action added successfully:",
+                      submitData.message
+                    );
+                  } else {
+                    console.error("Failed to add action:", submitData.message);
+                  }
+                } catch (error) {
+                  console.error("Error in API call:", error);
+                }
+              }
+
+              for (const item of progressArray) {
+                const progress = {
+                  companyName: companyName,
+                  report_year: reportYear,
+                  companyData: item.Progress // Send each action as an array with a single element
+                };
+
+                // Making the API call for each action
+                try {
+                  const submitActions = await fetch(
+                    serverURL + "/api/insertProgress",
+                    {
+                      method: "POST",
+                      headers: {
+                        "Content-Type": "application/json",
+                      },
+                      body: JSON.stringify(progress),
+                    }
+                  );
+
+                  const submitData = await submitActions.json();
+                  if (submitData.success) {
+                    console.log(
+                      "progress added successfully:",
+                      submitData.message
+                    );
+                  } else {
+                    console.error(
+                      "Failed to add progress:",
+                      submitData.message
+                    );
+                  }
+                } catch (error) {
+                  console.error("Error in API call:", error);
+                }
+              }
+
+              for (const item of targetsArray) {
+                const targets = {
+                  companyName: companyName,
+                  report_year: reportYear,
+                  companyData: item.Target// Send each action as an array with a single element
+                };
+
+                // Making the API call for each action
+                try {
+                  const submitActions = await fetch(
+                    serverURL + "/api/insertTargets",
+                    {
+                      method: "POST",
+                      headers: {
+                        "Content-Type": "application/json",
+                      },
+                      body: JSON.stringify(targets),
+                    }
+                  );
+
+                  const submitData = await submitActions.json();
+                  if (submitData.success) {
+                    console.log(
+                      "targets added successfully:",
+                      submitData.message
+                    );
+                  } else {
+                    console.error("Failed to add targets:", submitData.message);
+                  }
+                } catch (error) {
+                  console.error("Error in API call:", error);
+                }
+              }
+            } catch (error) {
+              console.error(`🚨 JSON Parsing Error on Page ${page}:`, error);
+            }
+          }
         } catch (error) {
           console.error("Error processing document or question:", error);
         }
@@ -832,7 +1499,6 @@ DO NOT give any additional details other than just the JSON object, to be clear 
       if (companyName === "Shell" && reportName === "Sustainability Report") {
         try {
           let extractedMarkdown = "";
-          let answerText = "";
           // Step 1: Call /api/ocr to get the extracted markdown
           for (let page = 50; page <= 54; page++) {
             const ocrResponse = await fetch(serverURL + "/api/ocr", {
@@ -869,15 +1535,130 @@ DO NOT give any additional details other than just the JSON object, to be clear 
             });
 
             const answerData = await answerResponse.json();
-            answerText += answerData.answer + "\n";
-          }
-          if (answerText) {
-            console.log("Answer:", answerText);
-          } else {
-            console.error(
-              "Error: No answer received from the question API. Response:",
-              answerText
-            );
+
+            if (!answerData || !answerData.answer) {
+              console.error(`No answer received for Page ${page}. Skipping...`);
+              continue;
+            }
+
+            const cleanedAnswer = answerData.answer
+              .replace(/```json\n?/, "")
+              .replace(/\n?```/, "");
+
+            try {
+              const parsedAnswer = JSON.parse(cleanedAnswer);
+
+              const actionsArray = parsedAnswer.Actions;
+              const progressArray = parsedAnswer.Progress;
+              const targetsArray = parsedAnswer.Targets; // Extracting Actions array
+
+              for (const action of actionsArray) {
+                const actions = {
+                  companyName: companyName,
+                  report_year: reportYear,
+                  companyData: action.Action// Send each action as an array with a single element
+                };
+
+                // Making the API call for each action
+                try {
+                  const submitActions = await fetch(
+                    serverURL + "/api/insertActions",
+                    {
+                      method: "POST",
+                      headers: {
+                        "Content-Type": "application/json",
+                      },
+                      body: JSON.stringify(actions),
+                    }
+                  );
+
+                  const submitData = await submitActions.json();
+                  if (submitData.success) {
+                    console.log(
+                      "Action added successfully:",
+                      submitData.message
+                    );
+                  } else {
+                    console.error("Failed to add action:", submitData.message);
+                  }
+                } catch (error) {
+                  console.error("Error in API call:", error);
+                }
+              }
+
+              for (const item of progressArray) {
+                const progress = {
+                  companyName: companyName,
+                  report_year: reportYear,
+                  companyData: item.Progress // Send each action as an array with a single element
+                };
+
+                // Making the API call for each action
+                try {
+                  const submitActions = await fetch(
+                    serverURL + "/api/insertProgress",
+                    {
+                      method: "POST",
+                      headers: {
+                        "Content-Type": "application/json",
+                      },
+                      body: JSON.stringify(progress),
+                    }
+                  );
+
+                  const submitData = await submitActions.json();
+                  if (submitData.success) {
+                    console.log(
+                      "progress added successfully:",
+                      submitData.message
+                    );
+                  } else {
+                    console.error(
+                      "Failed to add progress:",
+                      submitData.message
+                    );
+                  }
+                } catch (error) {
+                  console.error("Error in API call:", error);
+                }
+              }
+
+              for (const item of targetsArray) {
+                const targets = {
+                  companyName: companyName,
+                  report_year: reportYear,
+                  companyData: item.Target// Send each action as an array with a single element
+                };
+
+                // Making the API call for each action
+                try {
+                  const submitActions = await fetch(
+                    serverURL + "/api/insertTargets",
+                    {
+                      method: "POST",
+                      headers: {
+                        "Content-Type": "application/json",
+                      },
+                      body: JSON.stringify(targets),
+                    }
+                  );
+
+                  const submitData = await submitActions.json();
+                  if (submitData.success) {
+                    console.log(
+                      "targets added successfully:",
+                      submitData.message
+                    );
+                  } else {
+                    console.error("Failed to add targets:", submitData.message);
+                  }
+                } catch (error) {
+                  console.error("Error in API call:", error);
+                }
+              }
+            } catch (error) {
+              console.error(`🚨 JSON Parsing Error on Page ${page}:`, error);
+            }
           }
         } catch (error) {
           console.error("Error processing document or question:", error);
@@ -887,8 +1668,6 @@ DO NOT give any additional details other than just the JSON object, to be clear 
       if (companyName === "Cepsa" && reportName === "Sustainability Report") {
         try {
           let extractedMarkdown = "";
-          let answerText = "";
-          // Step 1: Call /api/ocr to get the extracted markdown
           for (let page = 50; page <= 54; page++) {
             const ocrResponse = await fetch(serverURL + "/api/ocr", {
               method: "POST",
@@ -924,18 +1703,131 @@ DO NOT give any additional details other than just the JSON object, to be clear 
             });
 
             const answerData = await answerResponse.json();
-            answerText += answerData.answer + "\n";
-          }
-          if (answerText) {
-            console.log("Answer:", answerText);
-          } else {
-            console.error(
-              "Error: No answer received from the question API. Response:",
-              answerText
-            );
-          }
 
-          // Extracted markdown text
+            if (!answerData || !answerData.answer) {
+              console.error(`No answer received for Page ${page}. Skipping...`);
+              continue;
+            }
+
+            const cleanedAnswer = answerData.answer
+              .replace(/```json\n?/, "")
+              .replace(/\n?```/, "");
+
+            try {
+              const parsedAnswer = JSON.parse(cleanedAnswer);
+
+              const actionsArray = parsedAnswer.Actions;
+              const progressArray = parsedAnswer.Progress;
+              const targetsArray = parsedAnswer.Targets; // Extracting Actions array
+
+              for (const action of actionsArray) {
+                const actions = {
+                  companyName: companyName,
+                  report_year: reportYear,
+                  companyData: action.Action// Send each action as an array with a single element
+                };
+
+                // Making the API call for each action
+                try {
+                  const submitActions = await fetch(
+                    serverURL + "/api/insertActions",
+                    {
+                      method: "POST",
+                      headers: {
+                        "Content-Type": "application/json",
+                      },
+                      body: JSON.stringify(actions),
+                    }
+                  );
+
+                  const submitData = await submitActions.json();
+                  if (submitData.success) {
+                    console.log(
+                      "Action added successfully:",
+                      submitData.message
+                    );
+                  } else {
+                    console.error("Failed to add action:", submitData.message);
+                  }
+                } catch (error) {
+                  console.error("Error in API call:", error);
+                }
+              }
+
+              for (const item of progressArray) {
+                const progress = {
+                  companyName: companyName,
+                  report_year: reportYear,
+                  companyData: item.Progress // Send each action as an array with a single element
+                };
+
+                // Making the API call for each action
+                try {
+                  const submitActions = await fetch(
+                    serverURL + "/api/insertProgress",
+                    {
+                      method: "POST",
+                      headers: {
+                        "Content-Type": "application/json",
+                      },
+                      body: JSON.stringify(progress),
+                    }
+                  );
+
+                  const submitData = await submitActions.json();
+                  if (submitData.success) {
+                    console.log(
+                      "progress added successfully:",
+                      submitData.message
+                    );
+                  } else {
+                    console.error(
+                      "Failed to add progress:",
+                      submitData.message
+                    );
+                  }
+                } catch (error) {
+                  console.error("Error in API call:", error);
+                }
+              }
+
+              for (const item of targetsArray) {
+                const targets = {
+                  companyName: companyName,
+                  report_year: reportYear,
+                  companyData: item.Target// Send each action as an array with a single element
+                };
+
+                // Making the API call for each action
+                try {
+                  const submitActions = await fetch(
+                    serverURL + "/api/insertTargets",
+                    {
+                      method: "POST",
+                      headers: {
+                        "Content-Type": "application/json",
+                      },
+                      body: JSON.stringify(targets),
+                    }
+                  );
+
+                  const submitData = await submitActions.json();
+                  if (submitData.success) {
+                    console.log(
+                      "targets added successfully:",
+                      submitData.message
+                    );
+                  } else {
+                    console.error("Failed to add targets:", submitData.message);
+                  }
+                } catch (error) {
+                  console.error("Error in API call:", error);
+                }
+              }
+            } catch (error) {
+              console.error(`🚨 JSON Parsing Error on Page ${page}:`, error);
+            }
+          }
         } catch (error) {
           console.error("Error processing document or question:", error);
         }
@@ -954,6 +1846,18 @@ DO NOT give any additional details other than just the JSON object, to be clear 
         alert("An error occurred while adding the document. Please try again.");
       }
     }
+  };
+
+  const reportNamesByCompany = {
+    BP: ["Factbook", "Sustainability Report"],
+    Cepsa: ["Sustainability Report", "Annual Report"],
+    ENI: ["Progress Report", "Sustainability Report"],
+    Equinor: ["Sustainability Report", "Annual Report"],
+    OMV: ["Progress Report", "Factbook"],
+    Puma: ["Sustainability Report", "Financial Report"],
+    Repsol: ["Sustainability Report", "Factbook"],
+    Shell: ["Sustainability Report", "Annual Report"],
+    TotalEnergies: ["Sustainability Report", "Factbook"],
   };
 
   const handleSort = (column) => {
@@ -1182,47 +2086,51 @@ DO NOT give any additional details other than just the JSON object, to be clear 
       <Dialog open={openDialog} onClose={handleDialogClose}>
         <DialogTitle>Add New File</DialogTitle>
         <DialogContent>
-          <FormControl fullWidth style={{ marginBottom: "1rem" }}>
-            <InputLabel id="company-name-label">Company Name</InputLabel>
-            <Select
-              labelId="company-name-label"
-              value={companyName}
-              onChange={(e) => setCompanyName(e.target.value)}
-            >
-              <MenuItem value="" disabled>
-                Select a company
-              </MenuItem>
-              {[
-                "BP",
-                "Cepsa",
-                "ENI",
-                "Equinor",
-                "OMV",
-                "Puma",
-                "Repsol",
-                "Shell",
-                "TotalEnergies",
-              ].map((company) => (
-                <MenuItem key={company} value={company}>
-                  {company}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-          <TextField
-            label="Report Year"
-            fullWidth
-            style={{ marginBottom: "1rem" }}
-            value={reportYear}
-            onChange={(e) => setReportYear(e.target.value)}
-          />
-          <TextField
-            label="Report Name"
-            fullWidth
-            style={{ marginBottom: "1rem" }}
-            value={reportName}
-            onChange={(e) => setReportName(e.target.value)}
-          />
+        <FormControl fullWidth style={{ marginBottom: "1rem" }}>
+        <InputLabel id="company-name-label">Company Name</InputLabel>
+        <Select
+          labelId="company-name-label"
+          value={companyName}
+          onChange={(e) => {
+            setCompanyName(e.target.value);
+            setReportName(""); // Reset Report Name when Company changes
+          }}
+        >
+          <MenuItem value="" disabled>
+            Select a company
+          </MenuItem>
+          {Object.keys(reportNamesByCompany).map((company) => (
+            <MenuItem key={company} value={company}>
+              {company}
+            </MenuItem>
+          ))}
+        </Select>
+      </FormControl>
+      {companyName && (
+          <>
+            <TextField
+              label="Report Year"
+              fullWidth
+              style={{ marginBottom: "1rem" }}
+              value={reportYear}
+              onChange={(e) => setReportYear(e.target.value)}
+            />
+            
+            <FormControl fullWidth style={{ marginBottom: "1rem" }}>
+              <InputLabel id="report-name-label">Report Name</InputLabel>
+              <Select
+                labelId="report-name-label"
+                value={reportName}
+                onChange={(e) => setReportName(e.target.value)}
+              >
+                <MenuItem value="" disabled>Select a report type</MenuItem>
+                {reportNamesByCompany[companyName].map((report) => (
+                  <MenuItem key={report} value={report}>{report}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </>
+          )}
           <TextField
             label="Document URL"
             fullWidth
