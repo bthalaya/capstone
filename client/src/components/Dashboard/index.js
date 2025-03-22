@@ -3,7 +3,7 @@ import { Box, Typography, Button, Select, ToggleButton, ToggleButtonGroup, MenuI
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import { ArrowBackIos, ArrowForwardIos } from "@mui/icons-material";
 
-const serverURL = "http://localhost:5000"; // Your server URL
+const serverURL = "http://localhost:5000";
 
 const lightTheme = createTheme({
   palette: {
@@ -16,14 +16,18 @@ const lightTheme = createTheme({
     },
   },
 });
-const tileColors = ["#0A5541", "#9BBB70", "#37A58E", "#24788C"]; // Customize as you like
+const tileColors = ["#0A5541", "#9BBB70", "#37A58E", "#24788C"]; 
 
 
 const FunFactsCarousel = ({ apiCall }) => {
   const [funFacts, setFunFacts] = useState([]);
-  const [viewType, setViewType] = useState("tiles"); // Toggle between tiles and table
+  const [viewType, setViewType] = useState("tiles"); 
   const [selectedYear, setSelectedYear] = useState("All Years");
   const [selectedType, setSelectedType] = useState("All Types");
+  const [currentPage, setCurrentPage] = useState(0);
+  const itemsPerPage = 12;  
+  
+
 
   useEffect(() => {
 
@@ -34,13 +38,11 @@ const FunFactsCarousel = ({ apiCall }) => {
         const response = await fetch(apiCall);
         const data = await response.json();
   
-        // Shuffle fun facts
         const shuffled = data
           .map((item) => ({ sort: Math.random(), value: item }))
           .sort((a, b) => a.sort - b.sort)
           .map((obj) => obj.value);
   
-        // Assign random colors from tileColors
         const withColors = shuffled.map((fact) => ({
           ...fact,
           color: tileColors[Math.floor(Math.random() * tileColors.length)],
@@ -54,14 +56,18 @@ const FunFactsCarousel = ({ apiCall }) => {
     fetchFunFacts();
   }, [apiCall]);
 
-  // Get unique years and types for filtering
   const years = [...new Set(funFacts.map((fact) => fact.year))];
   const types = [...new Set(funFacts.map((fact) => fact.type))];
 
-  // Filter fun facts based on selections
   const filteredFacts = funFacts.filter((fact) => 
     (selectedYear === "All Years" || fact.year === selectedYear) &&
     (selectedType === "All Types" || fact.type === selectedType)
+  );
+
+  const pageCount = Math.ceil(filteredFacts.length / itemsPerPage);
+  const paginatedFacts = filteredFacts.slice(
+    currentPage * itemsPerPage,
+    currentPage * itemsPerPage + itemsPerPage
   );
 
   const handleViewChange = (event, newView) => {
@@ -84,7 +90,6 @@ useEffect(() => {
   });
   setIsTruncatedMap(updated);
 }, [filteredFacts]);
-
 
 
   return (
@@ -138,6 +143,24 @@ useEffect(() => {
         </Select>
       </Box>
 
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', my: 2, gap: 2 }}>
+        <IconButton
+          onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 0))}
+          disabled={currentPage === 0}
+        >
+          <ArrowBackIos />
+        </IconButton>
+        <Typography>
+          Page {currentPage + 1} of {pageCount}
+        </Typography>
+        <IconButton
+          onClick={() => setCurrentPage((prev) => Math.min(prev + 1, pageCount - 1))}
+          disabled={currentPage >= pageCount - 1}
+        >
+          <ArrowForwardIos />
+        </IconButton>
+      </Box>
+
      {/* Tile View */}
       {viewType === "tiles" && (
         <Box
@@ -147,7 +170,7 @@ useEffect(() => {
             gap: 2,
           }}
         >
-          {filteredFacts.map((fact, index) => (
+          {paginatedFacts.map((fact, index) => (
             <Card
               key={index}
               onClick={() => {
@@ -211,7 +234,7 @@ useEffect(() => {
             </tr>
           </thead>
           <tbody>
-            {filteredFacts.map((fact, index) => (
+            {paginatedFacts.map((fact, index) => (
               <tr key={index}>
                 <td style={{ padding: 8, borderBottom: "1px solid #ddd" }}>{fact.year}</td>
                 <td style={{ padding: 8, borderBottom: "1px solid #ddd" }}>{fact.type}</td>
@@ -227,9 +250,8 @@ useEffect(() => {
 
 const TABLEAU_SCRIPT_URL = "https://public.tableau.com/javascripts/api/tableau.embedding.3.latest.min.js";
 
-// Define company-specific Tableau dashboard links
 const dashboardLinks = {
-  "Total Energies": "https://public.tableau.com/views/TEMetrics_17418767531310/Story1",
+  "TE": "https://public.tableau.com/views/TEMetrics_17418767531310/Story1",
   "BP": "https://public.tableau.com/views/BPMetrics/Story1",
   "Shell": "https://public.tableau.com/views/ShellMetrics/Story1",
   "Cepsa": "https://public.tableau.com/views/CepsaMetrics/Story1",
@@ -242,10 +264,13 @@ const dashboardLinks = {
 
 const Dashboard = () => {
   const [selectedCompany, setSelectedCompany] = useState("BP");
-  const vizRef = useRef(null); // Reference to <tableau-viz>
-  const apiCall = `/api/get${selectedCompany.replace(/\s/g, "")}`;
+  const vizRef = useRef(null); 
+  const [apiCall, setApiCall] = useState(`/api/getBP`);
 
-  // ✅ Load Tableau API v3 script ONCE when component mounts
+  useEffect(() => {
+    setApiCall(`/api/get${selectedCompany.replace(/\s/g, "")}`);
+  }, [selectedCompany]);
+  
   useEffect(() => {
     const script = document.createElement("script");
     script.type = "module";
@@ -258,10 +283,9 @@ const Dashboard = () => {
     };
   }, []);
 
-  // ✅ Update the Tableau visualization when `selectedCompany` changes
   useEffect(() => {
     if (vizRef.current) {
-      vizRef.current.setAttribute("src", dashboardLinks[selectedCompany]); // Update src dynamically
+      vizRef.current.setAttribute("src", dashboardLinks[selectedCompany]); 
     }
   }, [selectedCompany]);
 
@@ -289,7 +313,7 @@ const Dashboard = () => {
     <Select
       value={selectedCompany}
       onChange={(e) => setSelectedCompany(e.target.value)}
-      sx={{ mb: 2, width: "200px" }} // Adjust width here
+      sx={{ mb: 2, width: "200px" }} 
     >
       {Object.keys(dashboardLinks).map((company) => (
         <MenuItem key={company} value={company}>
@@ -301,11 +325,11 @@ const Dashboard = () => {
       <Box
           sx={{
             display: "flex",
-            justifyContent: "center", // Centers horizontally
-            alignItems: "center", // Centers vertically (if needed)
-            width: "100vw", // Full width of viewport
-            height: "100vh", // Full height of viewport
-            overflow: "hidden", // Prevents scrollbars if Tableau resizes weirdly
+            justifyContent: "center", 
+            alignItems: "center", 
+            width: "100vw", 
+            height: "100vh", 
+            overflow: "hidden", 
           }}
         >
           <tableau-viz
@@ -314,13 +338,12 @@ const Dashboard = () => {
             toolbar="bottom"
             hide-tabs
             style={{
-              width: "90vw", // Makes it more responsive
-              maxWidth: "1400px", // Adjust as needed
-              height: "100vh", // Ensures visibility
+              width: "90vw", 
+              maxWidth: "1400px", 
+              height: "100vh", 
             }}
           ></tableau-viz>
         </Box>
-
         <FunFactsCarousel apiCall={apiCall} />    
     </Box>
 
@@ -329,7 +352,3 @@ const Dashboard = () => {
 };
 
 export default Dashboard;
-
-
-{/* Rotating Fun Facts - Circular Loop */}
-        //      <br></br><FunFactsCarousel apiCall={"/api/getTE"}></FunFactsCarousel>

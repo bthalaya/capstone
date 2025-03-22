@@ -326,6 +326,29 @@ app.get("/api/getShell", async (req, res) => {
   }
 });
 
+app.get("/api/getCepsa", async (req, res) => {
+  try {
+    const pool = await sql.connect(config);
+    const result = await pool.request().query(`
+      SELECT * FROM Fun_Facts_Cepsa
+    `);
+
+    const funFacts = result.recordset.map((row) => ({
+      id: row.ID,
+      text: row.Fact,
+      year: row.Year,
+      type: row.Type,
+    }));
+
+    res.json(funFacts); // Match format of /api/companies
+  } catch (error) {
+    console.error("Error fetching data:", error);
+    res.status(500).send(error.message);
+  } finally {
+    sql.close();
+  }
+});
+
 app.get("/api/getBP", async (req, res) => {
   try {
     const pool = await sql.connect(config);
@@ -446,6 +469,52 @@ app.get("/api/getEni", async (req, res) => {
     const pool = await sql.connect(config);
     const result = await pool.request().query(`
       SELECT * FROM Fun_Facts_Eni
+    `);
+
+    const funFacts = result.recordset.map((row) => ({
+      id: row.ID,
+      text: row.Fact,
+      year: row.Year,
+      type: row.Type,
+    }));
+
+    res.json(funFacts); // Match format of /api/companies
+  } catch (error) {
+    console.error("Error fetching data:", error);
+    res.status(500).send(error.message);
+  } finally {
+    sql.close();
+  }
+});
+
+app.get("/api/getTE", async (req, res) => {
+  try {
+    const pool = await sql.connect(config);
+    const result = await pool.request().query(`
+      SELECT * FROM Fun_Facts_TE
+    `);
+
+    const funFacts = result.recordset.map((row) => ({
+      id: row.ID,
+      text: row.Fact,
+      year: row.Year,
+      type: row.Type,
+    }));
+
+    res.json(funFacts); // Match format of /api/companies
+  } catch (error) {
+    console.error("Error fetching data:", error);
+    res.status(500).send(error.message);
+  } finally {
+    sql.close();
+  }
+});
+
+app.get("/api/getRepsol", async (req, res) => {
+  try {
+    const pool = await sql.connect(config);
+    const result = await pool.request().query(`
+      SELECT * FROM Fun_Facts_Repsol
     `);
 
     const funFacts = result.recordset.map((row) => ({
