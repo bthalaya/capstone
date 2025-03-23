@@ -303,57 +303,228 @@ app.get("/api/getDocuments", async (req, res) => {
   }
 });
 
-app.get("/api/getTE", async (req, res) => {
+app.get("/api/getShell", async (req, res) => {
   try {
     const pool = await sql.connect(config);
     const result = await pool.request().query(`
-            SELECT Action_ID AS id, Actions AS text, 2016 AS Year, 'Action' AS Type FROM Actions_TE_2016
-      UNION ALL
-      SELECT Action_ID AS id, Actions AS text, 2017 AS Year, 'Action' AS Type FROM Actions_TE_2017
-      UNION ALL
-      SELECT Action_ID AS id, Actions AS text, 2018 AS Year, 'Action' AS Type FROM Actions_TE_2018
-      UNION ALL
-      SELECT Action_ID AS id, Actions AS text, 2019 AS Year, 'Action' AS Type FROM Actions_TE_2019
-      UNION ALL
-      SELECT Action_ID AS id, Actions AS text, 2020 AS Year, 'Action' AS Type FROM Actions_TE_2020
-      UNION ALL
-      SELECT Action_ID AS id, Actions AS text, 2021 AS Year, 'Action' AS Type FROM Actions_TE_2021
-      UNION ALL
-      SELECT Progress_ID AS id, Progress_Updates AS text, 2016 AS Year, 'Progress' AS Type FROM Progress_TE_2016
-      UNION ALL
-      SELECT Progress_ID AS id, Progress_Updates AS text, 2017 AS Year, 'Progress' AS Type FROM Progress_TE_2017
-      UNION ALL
-      SELECT Progress_ID AS id, Progress_Updates AS text, 2018 AS Year, 'Progress' AS Type FROM Progress_TE_2018
-      UNION ALL
-      SELECT Progress_ID AS id, Progress_Updates AS text, 2019 AS Year, 'Progress' AS Type FROM Progress_TE_2019
-      UNION ALL
-      SELECT Progress_ID AS id, Progress_Updates AS text, 2020 AS Year, 'Progress' AS Type FROM Progress_TE_2020
-      UNION ALL
-      SELECT Progress_ID AS id, Progress_Updates AS text, 2021 AS Year, 'Progress' AS Type FROM Progress_TE_2021
-      UNION ALL
-      SELECT Target_ID AS id, Target AS text, 2016 AS Year, 'Target' AS Type FROM Target_TE_2016
-      UNION ALL
-      SELECT Target_ID AS id, Target AS text, 2017 AS Year, 'Target' AS Type FROM Target_TE_2017
-      UNION ALL
-      SELECT Target_ID AS id, Target AS text, 2018 AS Year, 'Target' AS Type FROM Target_TE_2018
-      UNION ALL
-      SELECT Target_ID AS id, Target AS text, 2019 AS Year, 'Target' AS Type FROM Target_TE_2019
-      UNION ALL
-      SELECT Target_ID AS id, Target AS text, 2020 AS Year, 'Target' AS Type FROM Target_TE_2020
-      UNION ALL
-      SELECT Target_ID AS id, Target AS text, 2021 AS Year, 'Target' AS Type FROM Target_TE_2021
-      ORDER BY Year DESC;
+      SELECT * FROM Fun_Facts_Shell
     `);
 
-    // Format data for frontend use
     const funFacts = result.recordset.map((row) => ({
-      id: row.id,
-      text: row.text,
+      id: row.ID,
+      text: row.Fact,
       year: row.Year,
       type: row.Type,
     }));
 
-    res.send({ funFacts });
+    res.json(funFacts); // Match format of /api/companies
+  } catch (error) {
+    console.error("Error fetching data:", error);
+    res.status(500).send(error.message);
+  } finally {
+    sql.close();
+  }
+});
+
+app.get("/api/getCepsa", async (req, res) => {
+  try {
+    const pool = await sql.connect(config);
+    const result = await pool.request().query(`
+      SELECT * FROM Fun_Facts_Cepsa
+    `);
+
+    const funFacts = result.recordset.map((row) => ({
+      id: row.ID,
+      text: row.Fact,
+      year: row.Year,
+      type: row.Type,
+    }));
+
+    res.json(funFacts); // Match format of /api/companies
+  } catch (error) {
+    console.error("Error fetching data:", error);
+    res.status(500).send(error.message);
+  } finally {
+    sql.close();
+  }
+});
+
+app.get("/api/getBP", async (req, res) => {
+  try {
+    const pool = await sql.connect(config);
+    const result = await pool.request().query(`
+      SELECT * FROM Fun_Facts_BP
+    `);
+
+    const funFacts = result.recordset.map((row) => ({
+      id: row.ID,
+      text: row.Fact,
+      year: row.Year,
+      type: row.Type,
+    }));
+
+    res.json(funFacts); // Match format of /api/companies
+  } catch (error) {
+    console.error("Error fetching data:", error);
+    res.status(500).send(error.message);
+  } finally {
+    sql.close();
+  }
+});
+
+app.get("/api/getEquinor", async (req, res) => {
+  try {
+    const pool = await sql.connect(config);
+    const result = await pool.request().query(`
+      SELECT * FROM Fun_Facts_Equinor
+    `);
+
+    const funFacts = result.recordset.map((row) => ({
+      id: row.ID,
+      text: row.Fact,
+      year: row.Year,
+      type: row.Type,
+    }));
+
+    res.json(funFacts); // Match format of /api/companies
+  } catch (error) {
+    console.error("Error fetching data:", error);
+    res.status(500).send(error.message);
+  } finally {
+    sql.close();
+  }
+});
+
+app.get("/api/getOMV", async (req, res) => {
+  try {
+    const pool = await sql.connect(config);
+    const result = await pool.request().query(`
+      SELECT * FROM Fun_Facts_OMV
+    `);
+
+    const funFacts = result.recordset.map((row) => ({
+      id: row.ID,
+      text: row.Fact,
+      year: row.Year,
+      type: row.Type,
+    }));
+
+    res.json(funFacts); // Match format of /api/companies
+  } catch (error) {
+    console.error("Error fetching data:", error);
+    res.status(500).send(error.message);
+  } finally {
+    sql.close();
+  }
+});
+
+app.get("/api/getPuma", async (req, res) => {
+  try {
+    const pool = await sql.connect(config);
+    const result = await pool.request().query(`
+      SELECT * FROM Fun_Facts_Puma
+    `);
+
+    const funFacts = result.recordset.map((row) => ({
+      id: row.ID,
+      text: row.Fact,
+      year: row.Year,
+      type: row.Type,
+    }));
+
+    res.json(funFacts); // Match format of /api/companies
+  } catch (error) {
+    console.error("Error fetching data:", error);
+    res.status(500).send(error.message);
+  } finally {
+    sql.close();
+  }
+});
+
+app.get("/api/getRepsol", async (req, res) => {
+  try {
+    const pool = await sql.connect(config);
+    const result = await pool.request().query(`
+      SELECT * FROM Fun_Facts_Repsol
+    `);
+
+    const funFacts = result.recordset.map((row) => ({
+      id: row.ID,
+      text: row.Fact,
+      year: row.Year,
+      type: row.Type,
+    }));
+
+    res.json(funFacts); // Match format of /api/companies
+  } catch (error) {
+    console.error("Error fetching data:", error);
+    res.status(500).send(error.message);
+  } finally {
+    sql.close();
+  }
+});
+
+app.get("/api/getEni", async (req, res) => {
+  try {
+    const pool = await sql.connect(config);
+    const result = await pool.request().query(`
+      SELECT * FROM Fun_Facts_Eni
+    `);
+
+    const funFacts = result.recordset.map((row) => ({
+      id: row.ID,
+      text: row.Fact,
+      year: row.Year,
+      type: row.Type,
+    }));
+
+    res.json(funFacts); // Match format of /api/companies
+  } catch (error) {
+    console.error("Error fetching data:", error);
+    res.status(500).send(error.message);
+  } finally {
+    sql.close();
+  }
+});
+
+app.get("/api/getTE", async (req, res) => {
+  try {
+    const pool = await sql.connect(config);
+    const result = await pool.request().query(`
+      SELECT * FROM Fun_Facts_TE
+    `);
+
+    const funFacts = result.recordset.map((row) => ({
+      id: row.ID,
+      text: row.Fact,
+      year: row.Year,
+      type: row.Type,
+    }));
+
+    res.json(funFacts); // Match format of /api/companies
+  } catch (error) {
+    console.error("Error fetching data:", error);
+    res.status(500).send(error.message);
+  } finally {
+    sql.close();
+  }
+});
+
+app.get("/api/getRepsol", async (req, res) => {
+  try {
+    const pool = await sql.connect(config);
+    const result = await pool.request().query(`
+      SELECT * FROM Fun_Facts_Repsol
+    `);
+
+    const funFacts = result.recordset.map((row) => ({
+      id: row.ID,
+      text: row.Fact,
+      year: row.Year,
+      type: row.Type,
+    }));
+
+    res.json(funFacts); // Match format of /api/companies
   } catch (error) {
     console.error("Error fetching data:", error);
     res.status(500).send(error.message);

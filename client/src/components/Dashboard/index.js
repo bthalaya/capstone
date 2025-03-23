@@ -1,9 +1,9 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { Box, Typography, Select, MenuItem, Card, CardContent,IconButton } from '@mui/material';
+import { Box, Typography, Button, Select, ToggleButton, ToggleButtonGroup, MenuItem, Card, CardContent,IconButton } from '@mui/material';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import { ArrowBackIos, ArrowForwardIos } from "@mui/icons-material";
 
-const serverURL = "http://localhost:5000"; // Your server URL
+const serverURL = "http://localhost:5000";
 
 const lightTheme = createTheme({
   palette: {
@@ -16,31 +16,39 @@ const lightTheme = createTheme({
     },
   },
 });
+const tileColors = ["#0A5541", "#9BBB70", "#37A58E", "#24788C"]; 
+
 
 const FunFactsCarousel = ({ apiCall }) => {
   const [funFacts, setFunFacts] = useState([]);
-  const [visibleIndex, setVisibleIndex] = useState(0);
-  const [filteredFacts, setFilteredFacts] = useState([]);
-  const [selectedYear, setSelectedYear] = useState("All");
-  const [selectedType, setSelectedType] = useState("All");
-  const CARDS_VISIBLE = 7;
-  const ROTATION_INTERVAL = 5000;
+  const [viewType, setViewType] = useState("tiles"); 
+  const [selectedYear, setSelectedYear] = useState("All Years");
+  const [selectedType, setSelectedType] = useState("All Types");
+  const [currentPage, setCurrentPage] = useState(0);
+  const itemsPerPage = 12;  
+  
 
-  const shuffleArray = (array) => {
-    let shuffled = [...array];
-    for (let i = shuffled.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-    }
-    return shuffled;
-  };
 
   useEffect(() => {
+
+    console.log("Calling API:", apiCall);
+    
     const fetchFunFacts = async () => {
       try {
         const response = await fetch(apiCall);
         const data = await response.json();
-        setFunFacts(shuffleArray(data.funFacts));
+  
+        const shuffled = data
+          .map((item) => ({ sort: Math.random(), value: item }))
+          .sort((a, b) => a.sort - b.sort)
+          .map((obj) => obj.value);
+  
+        const withColors = shuffled.map((fact) => ({
+          ...fact,
+          color: tileColors[Math.floor(Math.random() * tileColors.length)],
+        }));
+  
+        setFunFacts(withColors);
       } catch (error) {
         console.error("Error fetching fun facts:", error);
       }
@@ -48,150 +56,221 @@ const FunFactsCarousel = ({ apiCall }) => {
     fetchFunFacts();
   }, [apiCall]);
 
-  useEffect(() => {
-    if (funFacts.length === 0) return;
-    const interval = setInterval(() => {
-      setVisibleIndex((prevIndex) => (prevIndex + 1) % filteredFacts.length);
-    }, ROTATION_INTERVAL);
-    return () => clearInterval(interval);
-  }, [filteredFacts.length]);
+  const years = [...new Set(funFacts.map((fact) => fact.year))];
+  const types = [...new Set(funFacts.map((fact) => fact.type))];
 
-  useEffect(() => {
-    let filtered = funFacts.filter(
-      (fact) => (selectedYear === "All" || fact.year === selectedYear) &&
-                (selectedType === "All" || fact.type === selectedType)
-    );
-    setFilteredFacts(filtered);
-    setVisibleIndex(0);
-  }, [selectedYear, selectedType, funFacts]);
+  const filteredFacts = funFacts.filter((fact) => 
+    (selectedYear === "All Years" || fact.year === selectedYear) &&
+    (selectedType === "All Types" || fact.type === selectedType)
+  );
 
-  const getVisibleFacts = () => {
-    if (filteredFacts.length === 0) return [];
-    return filteredFacts
-      .slice(visibleIndex, visibleIndex + CARDS_VISIBLE)
-      .concat(filteredFacts.slice(0, Math.max(0, visibleIndex + CARDS_VISIBLE - filteredFacts.length)));
-  };
+  const pageCount = Math.ceil(filteredFacts.length / itemsPerPage);
+  const paginatedFacts = filteredFacts.slice(
+    currentPage * itemsPerPage,
+    currentPage * itemsPerPage + itemsPerPage
+  );
 
-  const getCardColor = (type) => {
-    switch (type) {
-      case "Action": return "#81C784";
-      case "Progress": return "#DDEAF6";
-      case "Target": return "#E9D8F4";
-      default: return "#E0E0E0";
+  const handleViewChange = (event, newView) => {
+    if (newView !== null) {
+      setViewType(newView);
     }
   };
 
+  const expandedStates = useRef({});
+const textRefs = useRef({});
+const [isTruncatedMap, setIsTruncatedMap] = useState({});
+
+useEffect(() => {
+  const updated = {};
+  filteredFacts.forEach((fact, index) => {
+    const el = textRefs.current[index];
+    if (el) {
+      updated[index] = el.scrollHeight > el.clientHeight;
+    }
+  });
+  setIsTruncatedMap(updated);
+}, [filteredFacts]);
+
+
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", alignItems: "left", width: "100%" }}>
-  {/* Filter Controls */}
-      <Box sx={{ display: "flex", gap: 2, marginBottom: 2, justifyContent: "flex-start", width: "100%" }}>
-        <Select value={selectedYear} onChange={(e) => setSelectedYear(e.target.value)}>
-          <MenuItem value="All">All Years</MenuItem>
-          {[...new Set(funFacts.map(fact => fact.year))].sort().map((year) => (
-            <MenuItem key={year} value={year}>{year}</MenuItem>
+    <Box sx={{ width: "100%", padding: 2 }}>
+      {/* Title */}
+      <Typography variant="h5" sx={{ fontWeight: "bold", marginBottom: 2 }}>
+        Ecoscan Smart Highlights
+      </Typography>
+
+      {/* View Toggle Buttons */}
+      <Box sx={{ display: "flex", gap: 2, marginBottom: 2 }}>
+      <ToggleButtonGroup
+          value={viewType}
+          exclusive
+          onChange={handleViewChange}
+          aria-label="view toggle"
+        >
+          <ToggleButton value="tiles" aria-label="view as tiles" sx={{textTransform: "none"}}>
+            View as Tiles
+          </ToggleButton>
+          <ToggleButton value="table" aria-label="view as table" sx={{textTransform: "none"}}>
+            View as Table
+          </ToggleButton>
+        </ToggleButtonGroup>
+
+        {/* Dropdown Filters */}
+        <Select
+          value={selectedYear}
+          onChange={(e) => setSelectedYear(e.target.value)}
+          sx={{ minWidth: 150 }}
+        >
+          <MenuItem value="All Years">All Years</MenuItem>
+          {years.map((year) => (
+            <MenuItem key={year} value={year}>
+              {year}
+            </MenuItem>
           ))}
         </Select>
-        <Select value={selectedType} onChange={(e) => setSelectedType(e.target.value)}>
-          <MenuItem value="All">All Types</MenuItem>
-          {[...new Set(funFacts.map(fact => fact.type))].map((type) => (
-            <MenuItem key={type} value={type}>{type}</MenuItem>
+
+        <Select
+          value={selectedType}
+          onChange={(e) => setSelectedType(e.target.value)}
+          sx={{ minWidth: 150 }}
+        >
+          <MenuItem value="All Types">All Types</MenuItem>
+          {types.map((type) => (
+            <MenuItem key={type} value={type}>
+              {type}
+            </MenuItem>
           ))}
         </Select>
       </Box>
 
-      {/* Carousel - Ensure it's placed directly below */}
-      <Box sx={{ display: "flex", alignItems: "center", width: "100%" }}>
-        <IconButton onClick={() => setVisibleIndex((prevIndex) => (prevIndex === 0 ? filteredFacts.length - 1 : prevIndex - 1))}>
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', my: 2, gap: 2 }}>
+        <IconButton
+          onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 0))}
+          disabled={currentPage === 0}
+        >
           <ArrowBackIos />
         </IconButton>
+        <Typography>
+          Page {currentPage + 1} of {pageCount}
+        </Typography>
+        <IconButton
+          onClick={() => setCurrentPage((prev) => Math.min(prev + 1, pageCount - 1))}
+          disabled={currentPage >= pageCount - 1}
+        >
+          <ArrowForwardIos />
+        </IconButton>
+      </Box>
 
-        <Box sx={{ display: "flex", gap: 1, overflow: "hidden", width: "100%", justifyContent: "center" }}>
-          {getVisibleFacts().map((fact, index) => (
+     {/* Tile View */}
+      {viewType === "tiles" && (
+        <Box
+          sx={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))",
+            gap: 2,
+          }}
+        >
+          {paginatedFacts.map((fact, index) => (
             <Card
-              key={`${fact.id}-${index}`}
+              key={index}
+              onClick={() => {
+                if (isTruncatedMap[index]) {
+                  expandedStates.current[index] = !expandedStates.current[index];
+                  setIsTruncatedMap({ ...isTruncatedMap }); // force re-render
+                }
+              }}
               sx={{
-                minWidth: 180,
-                maxWidth: 180,
-                height: 140,
-                backgroundColor: getCardColor(fact.type),
-                display: "flex",
-                flexDirection: "column",
-                justifyContent: "center",
-                alignItems: "center",
-                padding: 0.5,
-                margin: 0,
+                backgroundColor: fact.color,
+                color: "white",
+                padding: 2,
+                height: "150px",
+                overflow: "hidden",
+                position: "relative",
+                transition: "all 0.3s ease",
+                cursor: isTruncatedMap[index] ? "pointer" : "default",
               }}
             >
               <CardContent
                 sx={{
-                  transition: "font-size 0.3s ease",
-                  fontSize: "8px",
-                  padding: "4px",
-                  "&:hover": { fontSize: "12px", whiteSpace: "normal" },
+                  height: "100%",
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "flex-start",
+                  gap: 1,
+                  padding: 1.5,
                 }}
               >
                 <Typography
-                  variant="body2"
+                  ref={(el) => (textRefs.current[index] = el)}
+                  variant="h6"
                   sx={{
-                    fontSize: "16px",
-                    lineHeight: "1.2",
                     display: "-webkit-box",
                     WebkitBoxOrient: "vertical",
-                    WebkitLineClamp: 3,
+                    WebkitLineClamp: expandedStates.current[index] ? "unset" : 3,
                     overflow: "hidden",
                     textOverflow: "ellipsis",
-                    width: "100%",
-                    textAlign: "left",
-                    "&:hover": {
-                      fontSize: "12px",
-                      lineHeight: "1.1",
-                      WebkitLineClamp: "unset",
-                      whiteSpace: "normal",
-                    },
+                    fontSize: expandedStates.current[index] ? "1rem" : "1.25rem",
+                    transition: "all 0.2s ease",
                   }}
                 >
                   {fact.text}
                 </Typography>
-                <br />
-                <Typography variant="caption" sx={{ fontWeight: "bold" }}>Year: </Typography>
-                <Typography variant="caption">{fact.year}</Typography>
-                <br />
-                <Typography variant="caption" sx={{ fontWeight: "bold" }}>Type: </Typography>
-                <Typography variant="caption">{fact.type}</Typography>
+                <Typography variant="body2" sx={{ mt: 0.5, opacity: 0.9 }}>
+                  Year: {fact.year} | Type: {fact.type}
+                </Typography>
               </CardContent>
             </Card>
           ))}
         </Box>
-
-        <IconButton onClick={() => setVisibleIndex((prevIndex) => (prevIndex + 1) % filteredFacts.length)}>
-          <ArrowForwardIos />
-        </IconButton>
-      </Box>
+      )}
+      {/* Table View (Optional) */}
+      {viewType === "table" && (
+        <table style={{ width: "100%", borderCollapse: "collapse", marginTop: 10 }}>
+          <thead>
+            <tr style={{ background: "#0A5541", color: "white", textAlign: "left" }}>
+              <th style={{ padding: 8, borderBottom: "2px solid #999" }}>Year</th>
+              <th style={{ padding: 8, borderBottom: "2px solid #999" }}>Type</th>
+              <th style={{ padding: 8, borderBottom: "2px solid #999" }}>Smart Highlight</th>
+            </tr>
+          </thead>
+          <tbody>
+            {paginatedFacts.map((fact, index) => (
+              <tr key={index}>
+                <td style={{ padding: 8, borderBottom: "1px solid #ddd" }}>{fact.year}</td>
+                <td style={{ padding: 8, borderBottom: "1px solid #ddd" }}>{fact.type}</td>
+                <td style={{ padding: 8, borderBottom: "1px solid #ddd" }}>{fact.text}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
     </Box>
   );
 };
 
-
 const TABLEAU_SCRIPT_URL = "https://public.tableau.com/javascripts/api/tableau.embedding.3.latest.min.js";
 
-// Define company-specific Tableau dashboard links
 const dashboardLinks = {
-  "Total Energies": "https://public.tableau.com/views/TEMetrics_17418767531310/Dashboard1",
-  "BP": "https://public.tableau.com/views/BPMetrics/Dashboard1",
-  "Shell": "https://public.tableau.com/views/ShellMetrics/Dashboard1",
-  "Cepsa": "https://public.tableau.com/views/CepsaMetrics/Dashboard1",
-  "Puma": "https://public.tableau.com/views/PumaMetrics/Dashboard1",
-  "Eni": "https://public.tableau.com/views/EniMetrics/Dashboard1",
-  "OMV": "https://public.tableau.com/views/OMVMetrics/Dashboard1",
-  "Equinor": "https://public.tableau.com/views/EquinorMetrics/Dashboard1",
-  "Repsol": "https://public.tableau.com/views/RepsolMetrics/Dashboard1",
+  "TE": "https://public.tableau.com/views/TEMetrics_17418767531310/Story1",
+  "BP": "https://public.tableau.com/views/BPMetrics/Story1",
+  "Shell": "https://public.tableau.com/views/ShellMetrics/Story1",
+  "Cepsa": "https://public.tableau.com/views/CepsaMetrics/Story1",
+  "Puma": "https://public.tableau.com/views/PumaMetrics/Story1",
+  "Eni": "https://public.tableau.com/views/EniMetrics/Story1",
+  "OMV": "https://public.tableau.com/views/OMVMetrics/Story1",
+  "Equinor": "https://public.tableau.com/views/EquinorMetrics/Story1",
+  "Repsol": "https://public.tableau.com/views/RepsolMetrics/Story1",
 };
 
 const Dashboard = () => {
   const [selectedCompany, setSelectedCompany] = useState("BP");
-  const vizRef = useRef(null); // Reference to <tableau-viz>
+  const vizRef = useRef(null); 
+  const [apiCall, setApiCall] = useState(`/api/getBP`);
 
-  // ✅ Load Tableau API v3 script ONCE when component mounts
+  useEffect(() => {
+    setApiCall(`/api/get${selectedCompany.replace(/\s/g, "")}`);
+  }, [selectedCompany]);
+  
   useEffect(() => {
     const script = document.createElement("script");
     script.type = "module";
@@ -204,10 +283,9 @@ const Dashboard = () => {
     };
   }, []);
 
-  // ✅ Update the Tableau visualization when `selectedCompany` changes
   useEffect(() => {
     if (vizRef.current) {
-      vizRef.current.setAttribute("src", dashboardLinks[selectedCompany]); // Update src dynamically
+      vizRef.current.setAttribute("src", dashboardLinks[selectedCompany]); 
     }
   }, [selectedCompany]);
 
@@ -227,35 +305,31 @@ const Dashboard = () => {
       Dashboard
     </Typography>
 
-      <br></br>
-      <FunFactsCarousel apiCall={"/api/getTE"}></FunFactsCarousel>
-      <br></br>
-
       <Typography variant="body1" paragraph>
         Select a company to view its Tableau dashboard:
       </Typography>
 
-      {/* Dropdown to select the company */}
-      <Select
-        value={selectedCompany}
-        onChange={(e) => setSelectedCompany(e.target.value)}
-        sx={{ mb: 2, width: "300px" }}
-      >
-        {Object.keys(dashboardLinks).map((company) => (
-          <MenuItem key={company} value={company}>
-            {company}
-          </MenuItem>
-        ))}
-      </Select>
+    {/* Dropdown to select the company */}
+    <Select
+      value={selectedCompany}
+      onChange={(e) => setSelectedCompany(e.target.value)}
+      sx={{ mb: 2, width: "200px" }} 
+    >
+      {Object.keys(dashboardLinks).map((company) => (
+        <MenuItem key={company} value={company}>
+          {company}
+        </MenuItem>
+      ))}
+    </Select>
 
       <Box
           sx={{
             display: "flex",
-            justifyContent: "center", // Centers horizontally
-            alignItems: "center", // Centers vertically (if needed)
-            width: "100vw", // Full width of viewport
-            height: "100vh", // Full height of viewport
-            overflow: "hidden", // Prevents scrollbars if Tableau resizes weirdly
+            justifyContent: "center", 
+            alignItems: "center", 
+            width: "100vw", 
+            height: "100vh", 
+            overflow: "hidden", 
           }}
         >
           <tableau-viz
@@ -264,18 +338,17 @@ const Dashboard = () => {
             toolbar="bottom"
             hide-tabs
             style={{
-              width: "90vw", // Makes it more responsive
-              maxWidth: "1400px", // Adjust as needed
-              height: "100vh", // Ensures visibility
+              width: "90vw", 
+              maxWidth: "1400px", 
+              height: "100vh", 
             }}
           ></tableau-viz>
         </Box>
+        <FunFactsCarousel apiCall={apiCall} />    
     </Box>
+
+
   );
 };
 
 export default Dashboard;
-
-
-{/* Rotating Fun Facts - Circular Loop */}
-        //<FunFactsCarousel apiCall={apiCall} />
