@@ -797,9 +797,16 @@ app.post("/api/insertActions", async (req, res) => {
   let pool;
 
   try {
+
+    if (!companyData || companyData.trim() === "") {
+      return res.status(400).json({ success: false, message: "No data provided to insert." });
+    }
+    
     // Connect to the database
     pool = await sql.connect(config);
     const request = new sql.Request(pool);
+
+
 
     // Insert the action into the dynamically named table
     await request
@@ -807,8 +814,8 @@ app.post("/api/insertActions", async (req, res) => {
       .input("Type", sql.VarChar(50), "Action") // Type will always be "Action"
       .input("Year", sql.Int, report_year) // The report year
       .query(`
-        INSERT INTO ${tableName} (ID, Fact, [Type], [Year])
-        VALUES (@ID, @Fact, @Type, @Year)
+        INSERT INTO ${tableName} (Fact, [Type], [Year])
+        VALUES (@Fact, @Type, @Year)
       `);
 
     res.json({ success: true, message: "Action added successfully." });
@@ -829,6 +836,11 @@ app.post("/api/insertProgress", async (req, res) => {
   let pool;
 
   try {
+
+    if (!companyData || companyData.trim() === "") {
+      return res.status(400).json({ success: false, message: "No data provided to insert." });
+    }
+
     // Connect to the database
     pool = await sql.connect(config);
     const request = new sql.Request(pool);
@@ -839,8 +851,8 @@ app.post("/api/insertProgress", async (req, res) => {
       .input("Type", sql.VarChar(50), "Progress") // Type will always be "Action"
       .input("Year", sql.Int, report_year) // The report year
       .query(`
-        INSERT INTO ${tableName} (ID, Fact, [Type], [Year])
-        VALUES (@ID, @Fact, @Type, @Year)
+        INSERT INTO ${tableName} (Fact, [Type], [Year])
+        VALUES (@Fact, @Type, @Year)
       `);
 
     res.json({ success: true, message: "Progress added successfully." });
@@ -861,6 +873,10 @@ app.post("/api/insertTargets", async (req, res) => {
   let pool;
 
   try {
+
+    if (!companyData || companyData.trim() === "") {
+      return res.status(400).json({ success: false, message: "No data provided to insert." });
+    }
     // Connect to the database
     pool = await sql.connect(config);
     const request = new sql.Request(pool);
@@ -871,8 +887,8 @@ app.post("/api/insertTargets", async (req, res) => {
       .input("Type", sql.VarChar(50), "Target") // Type will always be "Action"
       .input("Year", sql.Int, report_year) // The report year
       .query(`
-        INSERT INTO ${tableName} (ID, Fact, [Type], [Year])
-        VALUES (@ID, @Fact, @Type, @Year)
+        INSERT INTO ${tableName} (Fact, [Type], [Year])
+        VALUES (@Fact, @Type, @Year)
       `);
 
     res.json({ success: true, message: "Target added successfully." });

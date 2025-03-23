@@ -274,11 +274,11 @@ const ManageFiles = () => {
       console.log("Document added:", submitData);
 
       //i removed/hardcoded for testing purposes u can change it back
-      if (companyName === "OMV") {
+      if (companyName === "OMV" && reportName === "Sustainability Report") {
         try {
           let extractedMarkdown = "";
           // Step 1: Call /api/ocr to get the extracted markdown
-          for (let page = 50; page <= 50; page++) {
+          for (let page = 50; page <= 52; page++) {
             const ocrResponse = await fetch(serverURL + "/api/ocr", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
@@ -316,14 +316,14 @@ Focus: Extract achievements or efforts made by the company in the year of the re
 Content: Include progress related to reducing Scope 1, 2, and 3 emissions, enhancing energy efficiency, decreasing carbon emissions, and advancing green data initiatives.
 Format:
 Progress_ID: Auto-generate
-Progress Description: Exact wording of the progress description, adapted to a neutral perspective, focusing on climate-related progress.
+Progress_Description: Exact wording of the progress description, adapted to a neutral perspective, focusing on climate-related progress.
 Task 3: Create the Targets Table
 
 Focus: Identify future goals or objectives the company aims to achieve in upcoming years regarding sustainability and climate change.
 Content: Include targets related to reducing Scope 1, 2, and 3 emissions, improving energy efficiency, lowering carbon emissions, and implementing green data practices.
 Format:
 Target_ID: Auto-generate
-Target Description: Exact wording of the target as listed in the report, focusing on climate-related targets.
+Target_Description: Exact wording of the target as listed in the report, focusing on climate-related targets.
 Extract all data related to OMV's climate change initiatives and progress from the provided markdown text ${ocrData.markdown}.  
 
 General Guidelines:
@@ -334,7 +334,7 @@ This template is designed to be used for any company's sustainability report, wi
 Do not repeat information across tables. Place each point in only one of the three buckets.
 NOTE: Include only the most relevant and most important points related only to green initiatives and climate change, do not include other irrelevant stuff please!
 Do not make up any information. If the report lacks information in these tables, keep it blank. Format the response in a way that is easy to input into an SQL database, using a clear structure with fields for category, initiative, and details. 
-DO NOT give any additional details other than just the JSON object, to be clear JSON object only with no additional info/text for context`; // Your question here
+DO NOT give any additional details other than just the JSON object, to be clear JSON object only with no additional info/text for context`; 
 
             const answerResponse = await fetch(serverURL + "/api/chat", {
               method: "POST",
@@ -361,10 +361,13 @@ DO NOT give any additional details other than just the JSON object, to be clear 
 
             try {
               const parsedAnswer = JSON.parse(cleanedAnswer);
+              console.log(parsedAnswer)
 
               const actionsArray = parsedAnswer.Actions;
               const progressArray = parsedAnswer.Progress;
               const targetsArray = parsedAnswer.Targets; // Extracting Actions array
+
+              console.log(targetsArray)
 
               for (const action of actionsArray) {
                 const actions = {
@@ -404,7 +407,7 @@ DO NOT give any additional details other than just the JSON object, to be clear 
                 const progress = {
                   companyName: companyName,
                   report_year: reportYear,
-                  companyData: item.Progress // Send each action as an array with a single element
+                  companyData: item.Progress_Description // Send each action as an array with a single element
                 };
 
                 // Making the API call for each action
@@ -441,7 +444,7 @@ DO NOT give any additional details other than just the JSON object, to be clear 
                 const targets = {
                   companyName: companyName,
                   report_year: reportYear,
-                  companyData: item.Target// Send each action as an array with a single element
+                  companyData: item.Target_Description// Send each action as an array with a single element
                 };
 
                 // Making the API call for each action
@@ -483,7 +486,7 @@ DO NOT give any additional details other than just the JSON object, to be clear 
         try {
           let extractedMarkdown = "";
           // Step 1: Call /api/ocr to get the extracted markdown
-          for (let page = 50; page <= 54; page++) {
+          for (let page = 18; page <= 19; page++) {
             const ocrResponse = await fetch(serverURL + "/api/ocr", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
@@ -504,9 +507,42 @@ DO NOT give any additional details other than just the JSON object, to be clear 
               return;
             }
             extractedMarkdown += ocrData.markdown + "\n";
-            const question = `Extract all data related to OMV's climate change initiatives and progress from the provided markdown text ${ocrData.markdown}. Organize the information into two JSON objects: one for cliamte change achievements and another for planned climate change initiatives for the future. Each JSON object should include categories such as the following categories: Carbon Emissions Reduction, Leak Detection and Repair, Energy Efficiency and Renewable Energy, Low- and Zero-Carbon Products, Carbon Capture and Storage, and Offsetting Emissions. Ensure that each entry in the JSON objects specifies the category, even if it is repetitive. Each entry should include the category, initiative, and its corresponding achievement or planned action with as much detail as possible. Format the response in a way that is easy to input into an SQL database, using a clear structure with fields for category, initiative, and details. 
-          `; 
-
+            const question = `Extract all data related to OMV's climate change initiatives and progress from the provided markdown text ${ocrData.markdown}.
+            You will be creating 3 tables: Actions, Progress, and Targets. These tables will capture a company's sustainability and climate change initiatives. Please follow the guidelines below to ensure accurate and relevant data extraction.
+            
+            Task 1: Create the Actions Table
+            
+            Focus: Identify current initiatives or activities the company is undertaking right now towards sustainability, specifically related to climate change mitigation.
+            Content: Include actions such as reducing Scope 1, 2, and 3 emissions, improving energy efficiency, lowering carbon emissions, and implementing green data practices.
+            Format:
+            Action_ID: Auto-generate
+            Action: Exact wording of the action from the report, focusing strictly on climate-related initiatives.
+            Task 2: Create the Progress Table
+            
+            Focus: Extract achievements or efforts made by the company in the year of the report specifically related to sustainability and climate change.
+            Content: Include progress related to reducing Scope 1, 2, and 3 emissions, enhancing energy efficiency, decreasing carbon emissions, and advancing green data initiatives.
+            Format:
+            Progress_ID: Auto-generate
+            Progress_Description: Exact wording of the progress description, adapted to a neutral perspective, focusing on climate-related progress.
+            Task 3: Create the Targets Table
+            
+            Focus: Identify future goals or objectives the company aims to achieve in upcoming years regarding sustainability and climate change.
+            Content: Include targets related to reducing Scope 1, 2, and 3 emissions, improving energy efficiency, lowering carbon emissions, and implementing green data practices.
+            Format:
+            Target_ID: Auto-generate
+            Target_Description: Exact wording of the target as listed in the report, focusing on climate-related targets.
+            Extract all data related to OMV's climate change initiatives and progress from the provided markdown text ${ocrData.markdown}.  
+            
+            General Guidelines:
+            
+            Ensure all extracted information is verbatim from the report to maintain accuracy.
+            Avoid using possessive terms like "our" or "we"; instead, use "they" or the company's name.
+            This template is designed to be used for any company's sustainability report, with a focus on climate change initiatives.
+            Do not repeat information across tables. Place each point in only one of the three buckets.
+            NOTE: Include only the most relevant and most important points related only to green initiatives and climate change, do not include other irrelevant stuff please!
+            Do not make up any information. If the report lacks information in these tables, keep it blank. Format the response in a way that is easy to input into an SQL database, using a clear structure with fields for category, initiative, and details. 
+            DO NOT give any additional details other than just the JSON object, to be clear JSON object only with no additional info/text for context`; 
+            
             const answerResponse = await fetch(serverURL + "/api/chat", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
@@ -572,7 +608,7 @@ DO NOT give any additional details other than just the JSON object, to be clear 
                 const progress = {
                   companyName: companyName,
                   report_year: reportYear,
-                  companyData: item.Progress // Send each action as an array with a single element
+                  companyData: item.Progress_Description // Send each action as an array with a single element
                 };
 
                 // Making the API call for each action
@@ -609,7 +645,7 @@ DO NOT give any additional details other than just the JSON object, to be clear 
                 const targets = {
                   companyName: companyName,
                   report_year: reportYear,
-                  companyData: item.Target// Send each action as an array with a single element
+                  companyData: item.Target_Description// Send each action as an array with a single element
                 };
 
                 // Making the API call for each action
@@ -647,12 +683,10 @@ DO NOT give any additional details other than just the JSON object, to be clear 
         }
       }
 
-      if (companyName === "ENI" && reportName === "Sustainability Report") {
+      if (companyName === "ENI" && reportName === "Annual Report") {
         try {
           let extractedMarkdown = "";
-          let answerText = "";
-          // Step 1: Call /api/ocr to get the extracted markdown
-          for (let page = 50; page <= 54; page++) {
+          for (let page = 153; page <= 154; page++) {
             const ocrResponse = await fetch(serverURL + "/api/ocr", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
@@ -674,9 +708,42 @@ DO NOT give any additional details other than just the JSON object, to be clear 
             }
             extractedMarkdown += ocrData.markdown + "\n";
             // Step 2: Call /api/chat with the extracted markdown and the desired question
-            const question = `Extract all data related to OMV's climate change initiatives and progress from the provided markdown text ${ocrData.markdown}. Organize the information into two JSON objects: one for cliamte change achievements and another for planned climate change initiatives for the future. Each JSON object should include categories such as the following categories: Carbon Emissions Reduction, Leak Detection and Repair, Energy Efficiency and Renewable Energy, Low- and Zero-Carbon Products, Carbon Capture and Storage, and Offsetting Emissions. Ensure that each entry in the JSON objects specifies the category, even if it is repetitive. Each entry should include the category, initiative, and its corresponding achievement or planned action with as much detail as possible. Format the response in a way that is easy to input into an SQL database, using a clear structure with fields for category, initiative, and details. 
-          `; // Your question here
-
+            const question = `Extract all data related to OMV's climate change initiatives and progress from the provided markdown text ${ocrData.markdown}.
+            You will be creating 3 tables: Actions, Progress, and Targets. These tables will capture a company's sustainability and climate change initiatives. Please follow the guidelines below to ensure accurate and relevant data extraction.
+            
+            Task 1: Create the Actions Table
+            
+            Focus: Identify current initiatives or activities the company is undertaking right now towards sustainability, specifically related to climate change mitigation.
+            Content: Include actions such as reducing Scope 1, 2, and 3 emissions, improving energy efficiency, lowering carbon emissions, and implementing green data practices.
+            Format:
+            Action_ID: Auto-generate
+            Action: Exact wording of the action from the report, focusing strictly on climate-related initiatives.
+            Task 2: Create the Progress Table
+            
+            Focus: Extract achievements or efforts made by the company in the year of the report specifically related to sustainability and climate change.
+            Content: Include progress related to reducing Scope 1, 2, and 3 emissions, enhancing energy efficiency, decreasing carbon emissions, and advancing green data initiatives.
+            Format:
+            Progress_ID: Auto-generate
+            Progress_Description: Exact wording of the progress description, adapted to a neutral perspective, focusing on climate-related progress.
+            Task 3: Create the Targets Table
+            
+            Focus: Identify future goals or objectives the company aims to achieve in upcoming years regarding sustainability and climate change.
+            Content: Include targets related to reducing Scope 1, 2, and 3 emissions, improving energy efficiency, lowering carbon emissions, and implementing green data practices.
+            Format:
+            Target_ID: Auto-generate
+            Target_Description: Exact wording of the target as listed in the report, focusing on climate-related targets.
+            Extract all data related to OMV's climate change initiatives and progress from the provided markdown text ${ocrData.markdown}.  
+            
+            General Guidelines:
+            
+            Ensure all extracted information is verbatim from the report to maintain accuracy.
+            Avoid using possessive terms like "our" or "we"; instead, use "they" or the company's name.
+            This template is designed to be used for any company's sustainability report, with a focus on climate change initiatives.
+            Do not repeat information across tables. Place each point in only one of the three buckets.
+            NOTE: Include only the most relevant and most important points related only to green initiatives and climate change, do not include other irrelevant stuff please!
+            Do not make up any information. If the report lacks information in these tables, keep it blank. Format the response in a way that is easy to input into an SQL database, using a clear structure with fields for category, initiative, and details. 
+            DO NOT give any additional details other than just the JSON object, to be clear JSON object only with no additional info/text for context`; 
+   
             const answerResponse = await fetch(serverURL + "/api/chat", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
@@ -706,7 +773,7 @@ DO NOT give any additional details other than just the JSON object, to be clear 
 
               for (const action of actionsArray) {
                 const actions = {
-                  companyName: companyName,
+                  companyName: "Eni",
                   report_year: reportYear,
                   companyData: action.Action// Send each action as an array with a single element
                 };
@@ -740,9 +807,9 @@ DO NOT give any additional details other than just the JSON object, to be clear 
 
               for (const item of progressArray) {
                 const progress = {
-                  companyName: companyName,
+                  companyName: "Eni",
                   report_year: reportYear,
-                  companyData: item.Progress // Send each action as an array with a single element
+                  companyData: item.Progress_Description // Send each action as an array with a single element
                 };
 
                 // Making the API call for each action
@@ -777,9 +844,9 @@ DO NOT give any additional details other than just the JSON object, to be clear 
 
               for (const item of targetsArray) {
                 const targets = {
-                  companyName: companyName,
+                  companyName: "Eni",
                   report_year: reportYear,
-                  companyData: item.Target// Send each action as an array with a single element
+                  companyData: item.Target_Description// Send each action as an array with a single element
                 };
 
                 // Making the API call for each action
@@ -817,12 +884,10 @@ DO NOT give any additional details other than just the JSON object, to be clear 
         }
       }
 
-      if (companyName === "Equinor" && reportName === "Sustainability Report") {
+      if (companyName === "Equinor" && reportName === "Annual Report") {
         try {
           let extractedMarkdown = "";
-          let answerText = "";
-          // Step 1: Call /api/ocr to get the extracted markdown
-          for (let page = 50; page <= 54; page++) {
+          for (let page = 19; page <= 21; page++) {
             const ocrResponse = await fetch(serverURL + "/api/ocr", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
@@ -844,9 +909,42 @@ DO NOT give any additional details other than just the JSON object, to be clear 
             }
             extractedMarkdown += ocrData.markdown + "\n";
             // Step 2: Call /api/chat with the extracted markdown and the desired question
-            const question = `Extract all data related to OMV's climate change initiatives and progress from the provided markdown text ${ocrData.markdown}. Organize the information into two JSON objects: one for cliamte change achievements and another for planned climate change initiatives for the future. Each JSON object should include categories such as the following categories: Carbon Emissions Reduction, Leak Detection and Repair, Energy Efficiency and Renewable Energy, Low- and Zero-Carbon Products, Carbon Capture and Storage, and Offsetting Emissions. Ensure that each entry in the JSON objects specifies the category, even if it is repetitive. Each entry should include the category, initiative, and its corresponding achievement or planned action with as much detail as possible. Format the response in a way that is easy to input into an SQL database, using a clear structure with fields for category, initiative, and details. 
-          `; // Your question here
-
+            const question = `Extract all data related to OMV's climate change initiatives and progress from the provided markdown text ${ocrData.markdown}.
+            You will be creating 3 tables: Actions, Progress, and Targets. These tables will capture a company's sustainability and climate change initiatives. Please follow the guidelines below to ensure accurate and relevant data extraction.
+            
+            Task 1: Create the Actions Table
+            
+            Focus: Identify current initiatives or activities the company is undertaking right now towards sustainability, specifically related to climate change mitigation.
+            Content: Include actions such as reducing Scope 1, 2, and 3 emissions, improving energy efficiency, lowering carbon emissions, and implementing green data practices.
+            Format:
+            Action_ID: Auto-generate
+            Action: Exact wording of the action from the report, focusing strictly on climate-related initiatives.
+            Task 2: Create the Progress Table
+            
+            Focus: Extract achievements or efforts made by the company in the year of the report specifically related to sustainability and climate change.
+            Content: Include progress related to reducing Scope 1, 2, and 3 emissions, enhancing energy efficiency, decreasing carbon emissions, and advancing green data initiatives.
+            Format:
+            Progress_ID: Auto-generate
+            Progress_Description: Exact wording of the progress description, adapted to a neutral perspective, focusing on climate-related progress.
+            Task 3: Create the Targets Table
+            
+            Focus: Identify future goals or objectives the company aims to achieve in upcoming years regarding sustainability and climate change.
+            Content: Include targets related to reducing Scope 1, 2, and 3 emissions, improving energy efficiency, lowering carbon emissions, and implementing green data practices.
+            Format:
+            Target_ID: Auto-generate
+            Target_Description: Exact wording of the target as listed in the report, focusing on climate-related targets.
+            Extract all data related to OMV's climate change initiatives and progress from the provided markdown text ${ocrData.markdown}.  
+            
+            General Guidelines:
+            
+            Ensure all extracted information is verbatim from the report to maintain accuracy.
+            Avoid using possessive terms like "our" or "we"; instead, use "they" or the company's name.
+            This template is designed to be used for any company's sustainability report, with a focus on climate change initiatives.
+            Do not repeat information across tables. Place each point in only one of the three buckets.
+            NOTE: Include only the most relevant and most important points related only to green initiatives and climate change, do not include other irrelevant stuff please!
+            Do not make up any information. If the report lacks information in these tables, keep it blank. Format the response in a way that is easy to input into an SQL database, using a clear structure with fields for category, initiative, and details. 
+            DO NOT give any additional details other than just the JSON object, to be clear JSON object only with no additional info/text for context`; 
+   
             const answerResponse = await fetch(serverURL + "/api/chat", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
@@ -873,6 +971,10 @@ DO NOT give any additional details other than just the JSON object, to be clear 
               const actionsArray = parsedAnswer.Actions;
               const progressArray = parsedAnswer.Progress;
               const targetsArray = parsedAnswer.Targets; // Extracting Actions array
+
+              console.log(targetsArray)
+              console.log(actionsArray)
+              console.log(progressArray)
 
               for (const action of actionsArray) {
                 const actions = {
@@ -912,7 +1014,7 @@ DO NOT give any additional details other than just the JSON object, to be clear 
                 const progress = {
                   companyName: companyName,
                   report_year: reportYear,
-                  companyData: item.Progress // Send each action as an array with a single element
+                  companyData: item.Progress_Description // Send each action as an array with a single element
                 };
 
                 // Making the API call for each action
@@ -949,7 +1051,7 @@ DO NOT give any additional details other than just the JSON object, to be clear 
                 const targets = {
                   companyName: companyName,
                   report_year: reportYear,
-                  companyData: item.Target// Send each action as an array with a single element
+                  companyData: item.Target_Description// Send each action as an array with a single element
                 };
 
                 // Making the API call for each action
@@ -987,520 +1089,11 @@ DO NOT give any additional details other than just the JSON object, to be clear 
         }
       }
 
-      if (companyName === "Puma" && reportName === "Sustainability Report") {
-        try {
-          let extractedMarkdown = "";
-          let answerText = "";
-          // Step 1: Call /api/ocr to get the extracted markdown
-          for (let page = 50; page <= 54; page++) {
-            const ocrResponse = await fetch(serverURL + "/api/ocr", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                documentUrl: documentURL,
-                pages: [page],
-              }),
-            });
-
-            const ocrData = await ocrResponse.json();
-            console.log("ocrData: " + ocrData.markdown);
-
-            if (!ocrData || !ocrData.markdown) {
-              console.error(
-                "Error: No markdown data received from OCR. Response:",
-                ocrData
-              );
-              return;
-            }
-            extractedMarkdown += ocrData.markdown + "\n";
-            // Step 2: Call /api/chat with the extracted markdown and the desired question
-            const question = `Extract all data related to OMV's climate change initiatives and progress from the provided markdown text ${ocrData.markdown}. Organize the information into two JSON objects: one for cliamte change achievements and another for planned climate change initiatives for the future. Each JSON object should include categories such as the following categories: Carbon Emissions Reduction, Leak Detection and Repair, Energy Efficiency and Renewable Energy, Low- and Zero-Carbon Products, Carbon Capture and Storage, and Offsetting Emissions. Ensure that each entry in the JSON objects specifies the category, even if it is repetitive. Each entry should include the category, initiative, and its corresponding achievement or planned action with as much detail as possible. Format the response in a way that is easy to input into an SQL database, using a clear structure with fields for category, initiative, and details. 
-          `; // Your question here
-
-            const answerResponse = await fetch(serverURL + "/api/chat", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                question: question,
-                markdownText: extractedMarkdown,
-              }),
-            });
-
-            const answerData = await answerResponse.json();
-
-            if (!answerData || !answerData.answer) {
-              console.error(`No answer received for Page ${page}. Skipping...`);
-              continue;
-            }
-
-            const cleanedAnswer = answerData.answer
-              .replace(/```json\n?/, "")
-              .replace(/\n?```/, "");
-
-            try {
-              const parsedAnswer = JSON.parse(cleanedAnswer);
-
-              const actionsArray = parsedAnswer.Actions;
-              const progressArray = parsedAnswer.Progress;
-              const targetsArray = parsedAnswer.Targets; // Extracting Actions array
-
-              for (const action of actionsArray) {
-                const actions = {
-                  companyName: companyName,
-                  report_year: reportYear,
-                  companyData: action.Action// Send each action as an array with a single element
-                };
-
-                // Making the API call for each action
-                try {
-                  const submitActions = await fetch(
-                    serverURL + "/api/insertActions",
-                    {
-                      method: "POST",
-                      headers: {
-                        "Content-Type": "application/json",
-                      },
-                      body: JSON.stringify(actions),
-                    }
-                  );
-
-                  const submitData = await submitActions.json();
-                  if (submitData.success) {
-                    console.log(
-                      "Action added successfully:",
-                      submitData.message
-                    );
-                  } else {
-                    console.error("Failed to add action:", submitData.message);
-                  }
-                } catch (error) {
-                  console.error("Error in API call:", error);
-                }
-              }
-
-              for (const item of progressArray) {
-                const progress = {
-                  companyName: companyName,
-                  report_year: reportYear,
-                  companyData: item.Progress // Send each action as an array with a single element
-                };
-
-                // Making the API call for each action
-                try {
-                  const submitActions = await fetch(
-                    serverURL + "/api/insertProgress",
-                    {
-                      method: "POST",
-                      headers: {
-                        "Content-Type": "application/json",
-                      },
-                      body: JSON.stringify(progress),
-                    }
-                  );
-
-                  const submitData = await submitActions.json();
-                  if (submitData.success) {
-                    console.log(
-                      "progress added successfully:",
-                      submitData.message
-                    );
-                  } else {
-                    console.error(
-                      "Failed to add progress:",
-                      submitData.message
-                    );
-                  }
-                } catch (error) {
-                  console.error("Error in API call:", error);
-                }
-              }
-
-              for (const item of targetsArray) {
-                const targets = {
-                  companyName: companyName,
-                  report_year: reportYear,
-                  companyData: item.Target// Send each action as an array with a single element
-                };
-
-                // Making the API call for each action
-                try {
-                  const submitActions = await fetch(
-                    serverURL + "/api/insertTargets",
-                    {
-                      method: "POST",
-                      headers: {
-                        "Content-Type": "application/json",
-                      },
-                      body: JSON.stringify(targets),
-                    }
-                  );
-
-                  const submitData = await submitActions.json();
-                  if (submitData.success) {
-                    console.log(
-                      "targets added successfully:",
-                      submitData.message
-                    );
-                  } else {
-                    console.error("Failed to add targets:", submitData.message);
-                  }
-                } catch (error) {
-                  console.error("Error in API call:", error);
-                }
-              }
-            } catch (error) {
-              console.error(`🚨 JSON Parsing Error on Page ${page}:`, error);
-            }
-          }
-        } catch (error) {
-          console.error("Error processing document or question:", error);
-        }
-      }
-
-      if (companyName === "Repsol" && reportName === "Sustainability Report") {
-        try {
-          let extractedMarkdown = "";
-          let answerText = "";
-          // Step 1: Call /api/ocr to get the extracted markdown
-          for (let page = 50; page <= 54; page++) {
-            const ocrResponse = await fetch(serverURL + "/api/ocr", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                documentUrl: documentURL,
-                pages: [page],
-              }),
-            });
-
-            const ocrData = await ocrResponse.json();
-            console.log("ocrData: " + ocrData.markdown);
-
-            if (!ocrData || !ocrData.markdown) {
-              console.error(
-                "Error: No markdown data received from OCR. Response:",
-                ocrData
-              );
-              return;
-            }
-            extractedMarkdown += ocrData.markdown + "\n";
-            // Step 2: Call /api/chat with the extracted markdown and the desired question
-            const question = `Extract all data related to OMV's climate change initiatives and progress from the provided markdown text ${ocrData.markdown}. Organize the information into two JSON objects: one for cliamte change achievements and another for planned climate change initiatives for the future. Each JSON object should include categories such as the following categories: Carbon Emissions Reduction, Leak Detection and Repair, Energy Efficiency and Renewable Energy, Low- and Zero-Carbon Products, Carbon Capture and Storage, and Offsetting Emissions. Ensure that each entry in the JSON objects specifies the category, even if it is repetitive. Each entry should include the category, initiative, and its corresponding achievement or planned action with as much detail as possible. Format the response in a way that is easy to input into an SQL database, using a clear structure with fields for category, initiative, and details. 
-          `; // Your question here
-
-            const answerResponse = await fetch(serverURL + "/api/chat", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                question: question,
-                markdownText: extractedMarkdown,
-              }),
-            });
-
-            const answerData = await answerResponse.json();
-
-            if (!answerData || !answerData.answer) {
-              console.error(`No answer received for Page ${page}. Skipping...`);
-              continue;
-            }
-
-            const cleanedAnswer = answerData.answer
-              .replace(/```json\n?/, "")
-              .replace(/\n?```/, "");
-
-            try {
-              const parsedAnswer = JSON.parse(cleanedAnswer);
-
-              const actionsArray = parsedAnswer.Actions;
-              const progressArray = parsedAnswer.Progress;
-              const targetsArray = parsedAnswer.Targets; // Extracting Actions array
-
-              for (const action of actionsArray) {
-                const actions = {
-                  companyName: companyName,
-                  report_year: reportYear,
-                  companyData: action.Action// Send each action as an array with a single element
-                };
-
-                // Making the API call for each action
-                try {
-                  const submitActions = await fetch(
-                    serverURL + "/api/insertActions",
-                    {
-                      method: "POST",
-                      headers: {
-                        "Content-Type": "application/json",
-                      },
-                      body: JSON.stringify(actions),
-                    }
-                  );
-
-                  const submitData = await submitActions.json();
-                  if (submitData.success) {
-                    console.log(
-                      "Action added successfully:",
-                      submitData.message
-                    );
-                  } else {
-                    console.error("Failed to add action:", submitData.message);
-                  }
-                } catch (error) {
-                  console.error("Error in API call:", error);
-                }
-              }
-
-              for (const item of progressArray) {
-                const progress = {
-                  companyName: companyName,
-                  report_year: reportYear,
-                  companyData: item.Progress // Send each action as an array with a single element
-                };
-
-                // Making the API call for each action
-                try {
-                  const submitActions = await fetch(
-                    serverURL + "/api/insertProgress",
-                    {
-                      method: "POST",
-                      headers: {
-                        "Content-Type": "application/json",
-                      },
-                      body: JSON.stringify(progress),
-                    }
-                  );
-
-                  const submitData = await submitActions.json();
-                  if (submitData.success) {
-                    console.log(
-                      "progress added successfully:",
-                      submitData.message
-                    );
-                  } else {
-                    console.error(
-                      "Failed to add progress:",
-                      submitData.message
-                    );
-                  }
-                } catch (error) {
-                  console.error("Error in API call:", error);
-                }
-              }
-
-              for (const item of targetsArray) {
-                const targets = {
-                  companyName: companyName,
-                  report_year: reportYear,
-                  companyData: item.Target// Send each action as an array with a single element
-                };
-
-                // Making the API call for each action
-                try {
-                  const submitActions = await fetch(
-                    serverURL + "/api/insertTargets",
-                    {
-                      method: "POST",
-                      headers: {
-                        "Content-Type": "application/json",
-                      },
-                      body: JSON.stringify(targets),
-                    }
-                  );
-
-                  const submitData = await submitActions.json();
-                  if (submitData.success) {
-                    console.log(
-                      "targets added successfully:",
-                      submitData.message
-                    );
-                  } else {
-                    console.error("Failed to add targets:", submitData.message);
-                  }
-                } catch (error) {
-                  console.error("Error in API call:", error);
-                }
-              }
-            } catch (error) {
-              console.error(`🚨 JSON Parsing Error on Page ${page}:`, error);
-            }
-          }
-        } catch (error) {
-          console.error("Error processing document or question:", error);
-        }
-      }
-      if (companyName === "TotalEnergies" && reportName === "Sustainability Report") {
-        try {
-          let extractedMarkdown = "";
-          let answerText = "";
-          // Step 1: Call /api/ocr to get the extracted markdown
-          for (let page = 50; page <= 54; page++) {
-            const ocrResponse = await fetch(serverURL + "/api/ocr", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                documentUrl: documentURL,
-                pages: [page],
-              }),
-            });
-
-            const ocrData = await ocrResponse.json();
-            console.log("ocrData: " + ocrData.markdown);
-
-            if (!ocrData || !ocrData.markdown) {
-              console.error(
-                "Error: No markdown data received from OCR. Response:",
-                ocrData
-              );
-              return;
-            }
-            extractedMarkdown += ocrData.markdown + "\n";
-            // Step 2: Call /api/chat with the extracted markdown and the desired question
-            const question = `Extract all data related to OMV's climate change initiatives and progress from the provided markdown text ${ocrData.markdown}. Organize the information into two JSON objects: one for cliamte change achievements and another for planned climate change initiatives for the future. Each JSON object should include categories such as the following categories: Carbon Emissions Reduction, Leak Detection and Repair, Energy Efficiency and Renewable Energy, Low- and Zero-Carbon Products, Carbon Capture and Storage, and Offsetting Emissions. Ensure that each entry in the JSON objects specifies the category, even if it is repetitive. Each entry should include the category, initiative, and its corresponding achievement or planned action with as much detail as possible. Format the response in a way that is easy to input into an SQL database, using a clear structure with fields for category, initiative, and details. 
-          `; // Your question here
-
-            const answerResponse = await fetch(serverURL + "/api/chat", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                question: question,
-                markdownText: extractedMarkdown,
-              }),
-            });
-
-            const answerData = await answerResponse.json();
-
-            if (!answerData || !answerData.answer) {
-              console.error(`No answer received for Page ${page}. Skipping...`);
-              continue;
-            }
-
-            const cleanedAnswer = answerData.answer
-              .replace(/```json\n?/, "")
-              .replace(/\n?```/, "");
-
-            try {
-              const parsedAnswer = JSON.parse(cleanedAnswer);
-
-              const actionsArray = parsedAnswer.Actions;
-              const progressArray = parsedAnswer.Progress;
-              const targetsArray = parsedAnswer.Targets; // Extracting Actions array
-
-              for (const action of actionsArray) {
-                const actions = {
-                  companyName: companyName,
-                  report_year: reportYear,
-                  companyData: action.Action// Send each action as an array with a single element
-                };
-
-                // Making the API call for each action
-                try {
-                  const submitActions = await fetch(
-                    serverURL + "/api/insertActions",
-                    {
-                      method: "POST",
-                      headers: {
-                        "Content-Type": "application/json",
-                      },
-                      body: JSON.stringify(actions),
-                    }
-                  );
-
-                  const submitData = await submitActions.json();
-                  if (submitData.success) {
-                    console.log(
-                      "Action added successfully:",
-                      submitData.message
-                    );
-                  } else {
-                    console.error("Failed to add action:", submitData.message);
-                  }
-                } catch (error) {
-                  console.error("Error in API call:", error);
-                }
-              }
-
-              for (const item of progressArray) {
-                const progress = {
-                  companyName: companyName,
-                  report_year: reportYear,
-                  companyData: item.Progress // Send each action as an array with a single element
-                };
-
-                // Making the API call for each action
-                try {
-                  const submitActions = await fetch(
-                    serverURL + "/api/insertProgress",
-                    {
-                      method: "POST",
-                      headers: {
-                        "Content-Type": "application/json",
-                      },
-                      body: JSON.stringify(progress),
-                    }
-                  );
-
-                  const submitData = await submitActions.json();
-                  if (submitData.success) {
-                    console.log(
-                      "progress added successfully:",
-                      submitData.message
-                    );
-                  } else {
-                    console.error(
-                      "Failed to add progress:",
-                      submitData.message
-                    );
-                  }
-                } catch (error) {
-                  console.error("Error in API call:", error);
-                }
-              }
-
-              for (const item of targetsArray) {
-                const targets = {
-                  companyName: companyName,
-                  report_year: reportYear,
-                  companyData: item.Target// Send each action as an array with a single element
-                };
-
-                // Making the API call for each action
-                try {
-                  const submitActions = await fetch(
-                    serverURL + "/api/insertTargets",
-                    {
-                      method: "POST",
-                      headers: {
-                        "Content-Type": "application/json",
-                      },
-                      body: JSON.stringify(targets),
-                    }
-                  );
-
-                  const submitData = await submitActions.json();
-                  if (submitData.success) {
-                    console.log(
-                      "targets added successfully:",
-                      submitData.message
-                    );
-                  } else {
-                    console.error("Failed to add targets:", submitData.message);
-                  }
-                } catch (error) {
-                  console.error("Error in API call:", error);
-                }
-              }
-            } catch (error) {
-              console.error(`🚨 JSON Parsing Error on Page ${page}:`, error);
-            }
-          }
-        } catch (error) {
-          console.error("Error processing document or question:", error);
-        }
-      }
-
-      if (companyName === "Shell" && reportName === "Sustainability Report") {
+      if (companyName === "Puma" && reportName === "Annual Report") {
         try {
           let extractedMarkdown = "";
           // Step 1: Call /api/ocr to get the extracted markdown
-          for (let page = 50; page <= 54; page++) {
+          for (let page = 40; page <= 42; page++) {
             const ocrResponse = await fetch(serverURL + "/api/ocr", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
@@ -1522,9 +1115,42 @@ DO NOT give any additional details other than just the JSON object, to be clear 
             }
             extractedMarkdown += ocrData.markdown + "\n";
             // Step 2: Call /api/chat with the extracted markdown and the desired question
-            const question = `Extract all data related to OMV's climate change initiatives and progress from the provided markdown text ${ocrData.markdown}. Organize the information into two JSON objects: one for cliamte change achievements and another for planned climate change initiatives for the future. Each JSON object should include categories such as the following categories: Carbon Emissions Reduction, Leak Detection and Repair, Energy Efficiency and Renewable Energy, Low- and Zero-Carbon Products, Carbon Capture and Storage, and Offsetting Emissions. Ensure that each entry in the JSON objects specifies the category, even if it is repetitive. Each entry should include the category, initiative, and its corresponding achievement or planned action with as much detail as possible. Format the response in a way that is easy to input into an SQL database, using a clear structure with fields for category, initiative, and details. 
-          `; // Your question here
-
+            const question = `Extract all data related to OMV's climate change initiatives and progress from the provided markdown text ${ocrData.markdown}.
+            You will be creating 3 tables: Actions, Progress, and Targets. These tables will capture a company's sustainability and climate change initiatives. Please follow the guidelines below to ensure accurate and relevant data extraction.
+            
+            Task 1: Create the Actions Table
+            
+            Focus: Identify current initiatives or activities the company is undertaking right now towards sustainability, specifically related to climate change mitigation.
+            Content: Include actions such as reducing Scope 1, 2, and 3 emissions, improving energy efficiency, lowering carbon emissions, and implementing green data practices.
+            Format:
+            Action_ID: Auto-generate
+            Action: Exact wording of the action from the report, focusing strictly on climate-related initiatives.
+            Task 2: Create the Progress Table
+            
+            Focus: Extract achievements or efforts made by the company in the year of the report specifically related to sustainability and climate change.
+            Content: Include progress related to reducing Scope 1, 2, and 3 emissions, enhancing energy efficiency, decreasing carbon emissions, and advancing green data initiatives.
+            Format:
+            Progress_ID: Auto-generate
+            Progress_Description: Exact wording of the progress description, adapted to a neutral perspective, focusing on climate-related progress.
+            Task 3: Create the Targets Table
+            
+            Focus: Identify future goals or objectives the company aims to achieve in upcoming years regarding sustainability and climate change.
+            Content: Include targets related to reducing Scope 1, 2, and 3 emissions, improving energy efficiency, lowering carbon emissions, and implementing green data practices.
+            Format:
+            Target_ID: Auto-generate
+            Target_Description: Exact wording of the target as listed in the report, focusing on climate-related targets.
+            Extract all data related to OMV's climate change initiatives and progress from the provided markdown text ${ocrData.markdown}.  
+            
+            General Guidelines:
+            
+            Ensure all extracted information is verbatim from the report to maintain accuracy.
+            Avoid using possessive terms like "our" or "we"; instead, use "they" or the company's name.
+            This template is designed to be used for any company's sustainability report, with a focus on climate change initiatives.
+            Do not repeat information across tables. Place each point in only one of the three buckets.
+            NOTE: Include only the most relevant and most important points related only to green initiatives and climate change, do not include other irrelevant stuff please!
+            Do not make up any information. If the report lacks information in these tables, keep it blank. Format the response in a way that is easy to input into an SQL database, using a clear structure with fields for category, initiative, and details. 
+            DO NOT give any additional details other than just the JSON object, to be clear JSON object only with no additional info/text for context`; 
+   
             const answerResponse = await fetch(serverURL + "/api/chat", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
@@ -1590,7 +1216,7 @@ DO NOT give any additional details other than just the JSON object, to be clear 
                 const progress = {
                   companyName: companyName,
                   report_year: reportYear,
-                  companyData: item.Progress // Send each action as an array with a single element
+                  companyData: item.Progress_Description // Send each action as an array with a single element
                 };
 
                 // Making the API call for each action
@@ -1627,7 +1253,7 @@ DO NOT give any additional details other than just the JSON object, to be clear 
                 const targets = {
                   companyName: companyName,
                   report_year: reportYear,
-                  companyData: item.Target// Send each action as an array with a single element
+                  companyData: item.Target_Description// Send each action as an array with a single element
                 };
 
                 // Making the API call for each action
@@ -1665,10 +1291,11 @@ DO NOT give any additional details other than just the JSON object, to be clear 
         }
       }
 
-      if (companyName === "Cepsa" && reportName === "Sustainability Report") {
+      if (companyName === "Repsol" && reportName === "Annual Report") {
         try {
           let extractedMarkdown = "";
-          for (let page = 50; page <= 54; page++) {
+          // Step 1: Call /api/ocr to get the extracted markdown
+          for (let page = 68; page <= 70; page++) {
             const ocrResponse = await fetch(serverURL + "/api/ocr", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
@@ -1690,9 +1317,42 @@ DO NOT give any additional details other than just the JSON object, to be clear 
             }
             extractedMarkdown += ocrData.markdown + "\n";
             // Step 2: Call /api/chat with the extracted markdown and the desired question
-            const question = `Extract all data related to OMV's climate change initiatives and progress from the provided markdown text ${ocrData.markdown}. Organize the information into two JSON objects: one for cliamte change achievements and another for planned climate change initiatives for the future. Each JSON object should include categories such as the following categories: Carbon Emissions Reduction, Leak Detection and Repair, Energy Efficiency and Renewable Energy, Low- and Zero-Carbon Products, Carbon Capture and Storage, and Offsetting Emissions. Ensure that each entry in the JSON objects specifies the category, even if it is repetitive. Each entry should include the category, initiative, and its corresponding achievement or planned action with as much detail as possible. Format the response in a way that is easy to input into an SQL database, using a clear structure with fields for category, initiative, and details. 
-          `; // Your question here
-
+            const question = `Extract all data related to OMV's climate change initiatives and progress from the provided markdown text ${ocrData.markdown}.
+            You will be creating 3 tables: Actions, Progress, and Targets. These tables will capture a company's sustainability and climate change initiatives. Please follow the guidelines below to ensure accurate and relevant data extraction.
+            
+            Task 1: Create the Actions Table
+            
+            Focus: Identify current initiatives or activities the company is undertaking right now towards sustainability, specifically related to climate change mitigation.
+            Content: Include actions such as reducing Scope 1, 2, and 3 emissions, improving energy efficiency, lowering carbon emissions, and implementing green data practices.
+            Format:
+            Action_ID: Auto-generate
+            Action: Exact wording of the action from the report, focusing strictly on climate-related initiatives.
+            Task 2: Create the Progress Table
+            
+            Focus: Extract achievements or efforts made by the company in the year of the report specifically related to sustainability and climate change.
+            Content: Include progress related to reducing Scope 1, 2, and 3 emissions, enhancing energy efficiency, decreasing carbon emissions, and advancing green data initiatives.
+            Format:
+            Progress_ID: Auto-generate
+            Progress_Description: Exact wording of the progress description, adapted to a neutral perspective, focusing on climate-related progress.
+            Task 3: Create the Targets Table
+            
+            Focus: Identify future goals or objectives the company aims to achieve in upcoming years regarding sustainability and climate change.
+            Content: Include targets related to reducing Scope 1, 2, and 3 emissions, improving energy efficiency, lowering carbon emissions, and implementing green data practices.
+            Format:
+            Target_ID: Auto-generate
+            Target_Description: Exact wording of the target as listed in the report, focusing on climate-related targets.
+            Extract all data related to OMV's climate change initiatives and progress from the provided markdown text ${ocrData.markdown}.  
+            
+            General Guidelines:
+            
+            Ensure all extracted information is verbatim from the report to maintain accuracy.
+            Avoid using possessive terms like "our" or "we"; instead, use "they" or the company's name.
+            This template is designed to be used for any company's sustainability report, with a focus on climate change initiatives.
+            Do not repeat information across tables. Place each point in only one of the three buckets.
+            NOTE: Include only the most relevant and most important points related only to green initiatives and climate change, do not include other irrelevant stuff please!
+            Do not make up any information. If the report lacks information in these tables, keep it blank. Format the response in a way that is easy to input into an SQL database, using a clear structure with fields for category, initiative, and details. 
+            DO NOT give any additional details other than just the JSON object, to be clear JSON object only with no additional info/text for context`; 
+   
             const answerResponse = await fetch(serverURL + "/api/chat", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
@@ -1758,7 +1418,7 @@ DO NOT give any additional details other than just the JSON object, to be clear 
                 const progress = {
                   companyName: companyName,
                   report_year: reportYear,
-                  companyData: item.Progress // Send each action as an array with a single element
+                  companyData: item.Progress_Description // Send each action as an array with a single element
                 };
 
                 // Making the API call for each action
@@ -1795,7 +1455,609 @@ DO NOT give any additional details other than just the JSON object, to be clear 
                 const targets = {
                   companyName: companyName,
                   report_year: reportYear,
-                  companyData: item.Target// Send each action as an array with a single element
+                  companyData: item.Target_Description// Send each action as an array with a single element
+                };
+
+                // Making the API call for each action
+                try {
+                  const submitActions = await fetch(
+                    serverURL + "/api/insertTargets",
+                    {
+                      method: "POST",
+                      headers: {
+                        "Content-Type": "application/json",
+                      },
+                      body: JSON.stringify(targets),
+                    }
+                  );
+
+                  const submitData = await submitActions.json();
+                  if (submitData.success) {
+                    console.log(
+                      "targets added successfully:",
+                      submitData.message
+                    );
+                  } else {
+                    console.error("Failed to add targets:", submitData.message);
+                  }
+                } catch (error) {
+                  console.error("Error in API call:", error);
+                }
+              }
+            } catch (error) {
+              console.error(`🚨 JSON Parsing Error on Page ${page}:`, error);
+            }
+          }
+        } catch (error) {
+          console.error("Error processing document or question:", error);
+        }
+      }
+      if (companyName === "TotalEnergies" && reportName === "Progress Report") {
+        try {
+          let extractedMarkdown = "";
+          // Step 1: Call /api/ocr to get the extracted markdown
+          for (let page = 29 ; page <= 31; page++) {
+            const ocrResponse = await fetch(serverURL + "/api/ocr", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                documentUrl: documentURL,
+                pages: [page],
+              }),
+            });
+
+            const ocrData = await ocrResponse.json();
+            console.log("ocrData: " + ocrData.markdown);
+
+            if (!ocrData || !ocrData.markdown) {
+              console.error(
+                "Error: No markdown data received from OCR. Response:",
+                ocrData
+              );
+              return;
+            }
+            extractedMarkdown += ocrData.markdown + "\n";
+            // Step 2: Call /api/chat with the extracted markdown and the desired question
+            const question = `Extract all data related to OMV's climate change initiatives and progress from the provided markdown text ${ocrData.markdown}.
+            You will be creating 3 tables: Actions, Progress, and Targets. These tables will capture a company's sustainability and climate change initiatives. Please follow the guidelines below to ensure accurate and relevant data extraction.
+            
+            Task 1: Create the Actions Table
+            
+            Focus: Identify current initiatives or activities the company is undertaking right now towards sustainability, specifically related to climate change mitigation.
+            Content: Include actions such as reducing Scope 1, 2, and 3 emissions, improving energy efficiency, lowering carbon emissions, and implementing green data practices.
+            Format:
+            Action_ID: Auto-generate
+            Action: Exact wording of the action from the report, focusing strictly on climate-related initiatives.
+            Task 2: Create the Progress Table
+            
+            Focus: Extract achievements or efforts made by the company in the year of the report specifically related to sustainability and climate change.
+            Content: Include progress related to reducing Scope 1, 2, and 3 emissions, enhancing energy efficiency, decreasing carbon emissions, and advancing green data initiatives.
+            Format:
+            Progress_ID: Auto-generate
+            Progress_Description: Exact wording of the progress description, adapted to a neutral perspective, focusing on climate-related progress.
+            Task 3: Create the Targets Table
+            
+            Focus: Identify future goals or objectives the company aims to achieve in upcoming years regarding sustainability and climate change.
+            Content: Include targets related to reducing Scope 1, 2, and 3 emissions, improving energy efficiency, lowering carbon emissions, and implementing green data practices.
+            Format:
+            Target_ID: Auto-generate
+            Target_Description: Exact wording of the target as listed in the report, focusing on climate-related targets.
+            Extract all data related to OMV's climate change initiatives and progress from the provided markdown text ${ocrData.markdown}.  
+            
+            General Guidelines:
+            
+            Ensure all extracted information is verbatim from the report to maintain accuracy.
+            Avoid using possessive terms like "our" or "we"; instead, use "they" or the company's name.
+            This template is designed to be used for any company's sustainability report, with a focus on climate change initiatives.
+            Do not repeat information across tables. Place each point in only one of the three buckets.
+            NOTE: Include only the most relevant and most important points related only to green initiatives and climate change, do not include other irrelevant stuff please!
+            Do not make up any information. If the report lacks information in these tables, keep it blank. Format the response in a way that is easy to input into an SQL database, using a clear structure with fields for category, initiative, and details. 
+            DO NOT give any additional details other than just the JSON object, to be clear JSON object only with no additional info/text for context`; 
+   
+            const answerResponse = await fetch(serverURL + "/api/chat", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                question: question,
+                markdownText: extractedMarkdown,
+              }),
+            });
+
+            const answerData = await answerResponse.json();
+
+            if (!answerData || !answerData.answer) {
+              console.error(`No answer received for Page ${page}. Skipping...`);
+              continue;
+            }
+
+            const cleanedAnswer = answerData.answer
+              .replace(/```json\n?/, "")
+              .replace(/\n?```/, "");
+
+            try {
+              const parsedAnswer = JSON.parse(cleanedAnswer);
+
+              const actionsArray = parsedAnswer.Actions;
+              const progressArray = parsedAnswer.Progress;
+              const targetsArray = parsedAnswer.Targets; // Extracting Actions array
+
+              for (const action of actionsArray) {
+                const actions = {
+                  companyName: "TE",
+                  report_year: reportYear,
+                  companyData: action.Action// Send each action as an array with a single element
+                };
+
+                // Making the API call for each action
+                try {
+                  const submitActions = await fetch(
+                    serverURL + "/api/insertActions",
+                    {
+                      method: "POST",
+                      headers: {
+                        "Content-Type": "application/json",
+                      },
+                      body: JSON.stringify(actions),
+                    }
+                  );
+
+                  const submitData = await submitActions.json();
+                  if (submitData.success) {
+                    console.log(
+                      "Action added successfully:",
+                      submitData.message
+                    );
+                  } else {
+                    console.error("Failed to add action:", submitData.message);
+                  }
+                } catch (error) {
+                  console.error("Error in API call:", error);
+                }
+              }
+
+              for (const item of progressArray) {
+                const progress = {
+                  companyName: "TE",
+                  report_year: reportYear,
+                  companyData: item.Progress_Description // Send each action as an array with a single element
+                };
+
+                // Making the API call for each action
+                try {
+                  const submitActions = await fetch(
+                    serverURL + "/api/insertProgress",
+                    {
+                      method: "POST",
+                      headers: {
+                        "Content-Type": "application/json",
+                      },
+                      body: JSON.stringify(progress),
+                    }
+                  );
+
+                  const submitData = await submitActions.json();
+                  if (submitData.success) {
+                    console.log(
+                      "progress added successfully:",
+                      submitData.message
+                    );
+                  } else {
+                    console.error(
+                      "Failed to add progress:",
+                      submitData.message
+                    );
+                  }
+                } catch (error) {
+                  console.error("Error in API call:", error);
+                }
+              }
+
+              for (const item of targetsArray) {
+                const targets = {
+                  companyName: "TE",
+                  report_year: reportYear,
+                  companyData: item.Target_Description// Send each action as an array with a single element
+                };
+
+                // Making the API call for each action
+                try {
+                  const submitActions = await fetch(
+                    serverURL + "/api/insertTargets",
+                    {
+                      method: "POST",
+                      headers: {
+                        "Content-Type": "application/json",
+                      },
+                      body: JSON.stringify(targets),
+                    }
+                  );
+
+                  const submitData = await submitActions.json();
+                  if (submitData.success) {
+                    console.log(
+                      "targets added successfully:",
+                      submitData.message
+                    );
+                  } else {
+                    console.error("Failed to add targets:", submitData.message);
+                  }
+                } catch (error) {
+                  console.error("Error in API call:", error);
+                }
+              }
+            } catch (error) {
+              console.error(`🚨 JSON Parsing Error on Page ${page}:`, error);
+            }
+          }
+        } catch (error) {
+          console.error("Error processing document or question:", error);
+        }
+      }
+
+      if (companyName === "Shell" && reportName === "Achieving Net Zero Emissions Report") {
+        try {
+          let extractedMarkdown = "";
+          for (let page = 0; page <= 17; page++) {
+            const ocrResponse = await fetch(serverURL + "/api/ocr", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                documentUrl: documentURL,
+                pages: [page],
+              }),
+            });
+
+            const ocrData = await ocrResponse.json();
+            console.log("ocrData: " + ocrData.markdown);
+
+            if (!ocrData || !ocrData.markdown) {
+              console.error(
+                "Error: No markdown data received from OCR. Response:",
+                ocrData
+              );
+              return;
+            }
+            extractedMarkdown += ocrData.markdown + "\n";
+            // Step 2: Call /api/chat with the extracted markdown and the desired question
+            const question = `Extract all data related to OMV's climate change initiatives and progress from the provided markdown text ${ocrData.markdown}.
+            You will be creating 3 tables: Actions, Progress, and Targets. These tables will capture a company's sustainability and climate change initiatives. Please follow the guidelines below to ensure accurate and relevant data extraction.
+            
+            Task 1: Create the Actions Table
+            
+            Focus: Identify current initiatives or activities the company is undertaking right now towards sustainability, specifically related to climate change mitigation.
+            Content: Include actions such as reducing Scope 1, 2, and 3 emissions, improving energy efficiency, lowering carbon emissions, and implementing green data practices.
+            Format:
+            Action_ID: Auto-generate
+            Action: Exact wording of the action from the report, focusing strictly on climate-related initiatives.
+            Task 2: Create the Progress Table
+            
+            Focus: Extract achievements or efforts made by the company in the year of the report specifically related to sustainability and climate change.
+            Content: Include progress related to reducing Scope 1, 2, and 3 emissions, enhancing energy efficiency, decreasing carbon emissions, and advancing green data initiatives.
+            Format:
+            Progress_ID: Auto-generate
+            Progress_Description: Exact wording of the progress description, adapted to a neutral perspective, focusing on climate-related progress.
+            Task 3: Create the Targets Table
+            
+            Focus: Identify future goals or objectives the company aims to achieve in upcoming years regarding sustainability and climate change.
+            Content: Include targets related to reducing Scope 1, 2, and 3 emissions, improving energy efficiency, lowering carbon emissions, and implementing green data practices.
+            Format:
+            Target_ID: Auto-generate
+            Target_Description: Exact wording of the target as listed in the report, focusing on climate-related targets.
+            Extract all data related to OMV's climate change initiatives and progress from the provided markdown text ${ocrData.markdown}.  
+            
+            General Guidelines:
+            
+            Ensure all extracted information is verbatim from the report to maintain accuracy.
+            Avoid using possessive terms like "our" or "we"; instead, use "they" or the company's name.
+            This template is designed to be used for any company's sustainability report, with a focus on climate change initiatives.
+            Do not repeat information across tables. Place each point in only one of the three buckets.
+            NOTE: Include only the most relevant and most important points related only to green initiatives and climate change, do not include other irrelevant stuff please!
+            Do not make up any information. If the report lacks information in these tables, keep it blank. Format the response in a way that is easy to input into an SQL database, using a clear structure with fields for category, initiative, and details. 
+            DO NOT give any additional details other than just the JSON object, to be clear JSON object only with no additional info/text for context`; 
+               const answerResponse = await fetch(serverURL + "/api/chat", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                question: question,
+                markdownText: extractedMarkdown,
+              }),
+            });
+
+            const answerData = await answerResponse.json();
+
+            if (!answerData || !answerData.answer) {
+              console.error(`No answer received for Page ${page}. Skipping...`);
+              continue;
+            }
+
+            const cleanedAnswer = answerData.answer
+              .replace(/```json\n?/, "")
+              .replace(/\n?```/, "");
+
+            try {
+              const parsedAnswer = JSON.parse(cleanedAnswer);
+
+              const actionsArray = parsedAnswer.Actions;
+              const progressArray = parsedAnswer.Progress;
+              const targetsArray = parsedAnswer.Targets; // Extracting Actions array
+
+              for (const action of actionsArray) {
+                const actions = {
+                  companyName: companyName,
+                  report_year: reportYear,
+                  companyData: action.Action// Send each action as an array with a single element
+                };
+
+                // Making the API call for each action
+                try {
+                  const submitActions = await fetch(
+                    serverURL + "/api/insertActions",
+                    {
+                      method: "POST",
+                      headers: {
+                        "Content-Type": "application/json",
+                      },
+                      body: JSON.stringify(actions),
+                    }
+                  );
+
+                  const submitData = await submitActions.json();
+                  if (submitData.success) {
+                    console.log(
+                      "Action added successfully:",
+                      submitData.message
+                    );
+                  } else {
+                    console.error("Failed to add action:", submitData.message);
+                  }
+                } catch (error) {
+                  console.error("Error in API call:", error);
+                }
+              }
+
+              for (const item of progressArray) {
+                const progress = {
+                  companyName: companyName,
+                  report_year: reportYear,
+                  companyData: item.Progress_Description // Send each action as an array with a single element
+                };
+
+                // Making the API call for each action
+                try {
+                  const submitActions = await fetch(
+                    serverURL + "/api/insertProgress",
+                    {
+                      method: "POST",
+                      headers: {
+                        "Content-Type": "application/json",
+                      },
+                      body: JSON.stringify(progress),
+                    }
+                  );
+
+                  const submitData = await submitActions.json();
+                  if (submitData.success) {
+                    console.log(
+                      "progress added successfully:",
+                      submitData.message
+                    );
+                  } else {
+                    console.error(
+                      "Failed to add progress:",
+                      submitData.message
+                    );
+                  }
+                } catch (error) {
+                  console.error("Error in API call:", error);
+                }
+              }
+
+              for (const item of targetsArray) {
+                const targets = {
+                  companyName: companyName,
+                  report_year: reportYear,
+                  companyData: item.Targets_Description// Send each action as an array with a single element
+                };
+
+                // Making the API call for each action
+                try {
+                  const submitActions = await fetch(
+                    serverURL + "/api/insertTargets",
+                    {
+                      method: "POST",
+                      headers: {
+                        "Content-Type": "application/json",
+                      },
+                      body: JSON.stringify(targets),
+                    }
+                  );
+
+                  const submitData = await submitActions.json();
+                  if (submitData.success) {
+                    console.log(
+                      "targets added successfully:",
+                      submitData.message
+                    );
+                  } else {
+                    console.error("Failed to add targets:", submitData.message);
+                  }
+                } catch (error) {
+                  console.error("Error in API call:", error);
+                }
+              }
+            } catch (error) {
+              console.error(`🚨 JSON Parsing Error on Page ${page}:`, error);
+            }
+          }
+        } catch (error) {
+          console.error("Error processing document or question:", error);
+        }
+      }
+
+      if (companyName === "Cepsa" && reportName === "Annual Report") {
+        try {
+          let extractedMarkdown = "";
+          for (let page = 50; page <= 52; page++) {
+            const ocrResponse = await fetch(serverURL + "/api/ocr", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                documentUrl: documentURL,
+                pages: [page],
+              }),
+            });
+
+            const ocrData = await ocrResponse.json();
+            console.log("ocrData: " + ocrData.markdown);
+
+            if (!ocrData || !ocrData.markdown) {
+              console.error(
+                "Error: No markdown data received from OCR. Response:",
+                ocrData
+              );
+              return;
+            }
+            extractedMarkdown += ocrData.markdown + "\n";
+            // Step 2: Call /api/chat with the extracted markdown and the desired question
+            const question = `Extract all data related to OMV's climate change initiatives and progress from the provided markdown text ${ocrData.markdown}.
+            You will be creating 3 tables: Actions, Progress, and Targets. These tables will capture a company's sustainability and climate change initiatives. Please follow the guidelines below to ensure accurate and relevant data extraction.
+            
+            Task 1: Create the Actions Table
+            
+            Focus: Identify current initiatives or activities the company is undertaking right now towards sustainability, specifically related to climate change mitigation.
+            Content: Include actions such as reducing Scope 1, 2, and 3 emissions, improving energy efficiency, lowering carbon emissions, and implementing green data practices.
+            Format:
+            Action_ID: Auto-generate
+            Action: Exact wording of the action from the report, focusing strictly on climate-related initiatives.
+            Task 2: Create the Progress Table
+            
+            Focus: Extract achievements or efforts made by the company in the year of the report specifically related to sustainability and climate change.
+            Content: Include progress related to reducing Scope 1, 2, and 3 emissions, enhancing energy efficiency, decreasing carbon emissions, and advancing green data initiatives.
+            Format:
+            Progress_ID: Auto-generate
+            Progress_Description: Exact wording of the progress description, adapted to a neutral perspective, focusing on climate-related progress.
+            Task 3: Create the Targets Table
+            
+            Focus: Identify future goals or objectives the company aims to achieve in upcoming years regarding sustainability and climate change.
+            Content: Include targets related to reducing Scope 1, 2, and 3 emissions, improving energy efficiency, lowering carbon emissions, and implementing green data practices.
+            Format:
+            Target_ID: Auto-generate
+            Target_Description: Exact wording of the target as listed in the report, focusing on climate-related targets.
+            Extract all data related to OMV's climate change initiatives and progress from the provided markdown text ${ocrData.markdown}.  
+            
+            General Guidelines:
+            
+            Ensure all extracted information is verbatim from the report to maintain accuracy.
+            Avoid using possessive terms like "our" or "we"; instead, use "they" or the company's name.
+            This template is designed to be used for any company's sustainability report, with a focus on climate change initiatives.
+            Do not repeat information across tables. Place each point in only one of the three buckets.
+            NOTE: Include only the most relevant and most important points related only to green initiatives and climate change, do not include other irrelevant stuff please!
+            Do not make up any information. If the report lacks information in these tables, keep it blank. Format the response in a way that is easy to input into an SQL database, using a clear structure with fields for category, initiative, and details. 
+            DO NOT give any additional details other than just the JSON object, to be clear JSON object only with no additional info/text for context`; 
+   
+            const answerResponse = await fetch(serverURL + "/api/chat", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                question: question,
+                markdownText: extractedMarkdown,
+              }),
+            });
+
+            const answerData = await answerResponse.json();
+
+            if (!answerData || !answerData.answer) {
+              console.error(`No answer received for Page ${page}. Skipping...`);
+              continue;
+            }
+
+            const cleanedAnswer = answerData.answer
+              .replace(/```json\n?/, "")
+              .replace(/\n?```/, "");
+
+            try {
+              const parsedAnswer = JSON.parse(cleanedAnswer);
+
+              const actionsArray = parsedAnswer.Actions;
+              const progressArray = parsedAnswer.Progress;
+              const targetsArray = parsedAnswer.Targets; // Extracting Actions array
+
+              for (const action of actionsArray) {
+                const actions = {
+                  companyName: companyName,
+                  report_year: reportYear,
+                  companyData: action.Action// Send each action as an array with a single element
+                };
+
+                // Making the API call for each action
+                try {
+                  const submitActions = await fetch(
+                    serverURL + "/api/insertActions",
+                    {
+                      method: "POST",
+                      headers: {
+                        "Content-Type": "application/json",
+                      },
+                      body: JSON.stringify(actions),
+                    }
+                  );
+
+                  const submitData = await submitActions.json();
+                  if (submitData.success) {
+                    console.log(
+                      "Action added successfully:",
+                      submitData.message
+                    );
+                  } else {
+                    console.error("Failed to add action:", submitData.message);
+                  }
+                } catch (error) {
+                  console.error("Error in API call:", error);
+                }
+              }
+
+              for (const item of progressArray) {
+                const progress = {
+                  companyName: companyName,
+                  report_year: reportYear,
+                  companyData: item.Progress_Description // Send each action as an array with a single element
+                };
+
+                // Making the API call for each action
+                try {
+                  const submitActions = await fetch(
+                    serverURL + "/api/insertProgress",
+                    {
+                      method: "POST",
+                      headers: {
+                        "Content-Type": "application/json",
+                      },
+                      body: JSON.stringify(progress),
+                    }
+                  );
+
+                  const submitData = await submitActions.json();
+                  if (submitData.success) {
+                    console.log(
+                      "progress added successfully:",
+                      submitData.message
+                    );
+                  } else {
+                    console.error(
+                      "Failed to add progress:",
+                      submitData.message
+                    );
+                  }
+                } catch (error) {
+                  console.error("Error in API call:", error);
+                }
+              }
+
+              for (const item of targetsArray) {
+                const targets = {
+                  companyName: companyName,
+                  report_year: reportYear,
+                  companyData: item.Target_Description// Send each action as an array with a single element
                 };
 
                 // Making the API call for each action
@@ -1850,14 +2112,14 @@ DO NOT give any additional details other than just the JSON object, to be clear 
 
   const reportNamesByCompany = {
     BP: ["Factbook", "Sustainability Report"],
-    Cepsa: ["Sustainability Report", "Annual Report"],
-    ENI: ["Progress Report", "Sustainability Report"],
-    Equinor: ["Sustainability Report", "Annual Report"],
-    OMV: ["Progress Report", "Factbook"],
-    Puma: ["Sustainability Report", "Financial Report"],
-    Repsol: ["Sustainability Report", "Factbook"],
-    Shell: ["Sustainability Report", "Annual Report"],
-    TotalEnergies: ["Sustainability Report", "Factbook"],
+    Cepsa: ["Annual Report", "Factbook"],
+    ENI: ["Factbook", "Annual Report"],
+    Equinor: ["Annual Report", "Factbook"],
+    OMV: ["Sustainability Report", "Factbook"],
+    Puma: ["Annual Report", "Factbook"],
+    Repsol: ["Annual Report", "Factbook"],
+    Shell: ["Achieving Net Zero Emissions Report", "Factbook"],
+    TotalEnergies: ["Progress Report", "Factbook"],
   };
 
   const handleSort = (column) => {
@@ -2046,6 +2308,7 @@ DO NOT give any additional details other than just the JSON object, to be clear 
           >
             {[
               "All years",
+              "2024",
               "2023",
               "2022",
               "2021",
