@@ -121,12 +121,12 @@ useEffect(() => {
           onChange={(e) => setSelectedYear(e.target.value)}
           sx={{ minWidth: 150 }}
         >
-          <MenuItem value="All Years">All Years</MenuItem>
-          {years.map((year) => (
-            <MenuItem key={year} value={year}>
-              {year}
-            </MenuItem>
-          ))}
+        <MenuItem value="All Years">All Years</MenuItem>
+        {[...years].sort((a, b) => b - a).map((year) => (
+          <MenuItem key={year} value={year}>
+            {year}
+          </MenuItem>
+        ))}
         </Select>
 
         <Select
