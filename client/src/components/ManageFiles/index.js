@@ -334,7 +334,7 @@ This template is designed to be used for any company's sustainability report, wi
 Do not repeat information across tables. Place each point in only one of the three buckets.
 NOTE: Include only the most relevant and most important points related only to green initiatives and climate change, do not include other irrelevant stuff please!
 Do not make up any information. If the report lacks information in these tables, keep it blank. Format the response in a way that is easy to input into an SQL database, using a clear structure with fields for category, initiative, and details. 
-DO NOT give any additional details other than just the JSON object, to be clear JSON object only with no additional info/text for context`; 
+DO NOT give any additional details other than just the JSON object, to be clear JSON object only with no additional info/text for context`;
 
             const answerResponse = await fetch(serverURL + "/api/chat", {
               method: "POST",
@@ -361,19 +361,19 @@ DO NOT give any additional details other than just the JSON object, to be clear 
 
             try {
               const parsedAnswer = JSON.parse(cleanedAnswer);
-              console.log(parsedAnswer)
+              console.log(parsedAnswer);
 
               const actionsArray = parsedAnswer.Actions;
               const progressArray = parsedAnswer.Progress;
               const targetsArray = parsedAnswer.Targets; // Extracting Actions array
 
-              console.log(targetsArray)
+              console.log(targetsArray);
 
               for (const action of actionsArray) {
                 const actions = {
                   companyName: companyName,
                   report_year: reportYear,
-                  companyData: action.Action// Send each action as an array with a single element
+                  companyData: action.Action, // Send each action as an array with a single element
                 };
 
                 // Making the API call for each action
@@ -407,7 +407,7 @@ DO NOT give any additional details other than just the JSON object, to be clear 
                 const progress = {
                   companyName: companyName,
                   report_year: reportYear,
-                  companyData: item.Progress_Description // Send each action as an array with a single element
+                  companyData: item.Progress_Description, // Send each action as an array with a single element
                 };
 
                 // Making the API call for each action
@@ -444,7 +444,7 @@ DO NOT give any additional details other than just the JSON object, to be clear 
                 const targets = {
                   companyName: companyName,
                   report_year: reportYear,
-                  companyData: item.Target_Description// Send each action as an array with a single element
+                  companyData: item.Target_Description, // Send each action as an array with a single element
                 };
 
                 // Making the API call for each action
@@ -541,8 +541,8 @@ DO NOT give any additional details other than just the JSON object, to be clear 
             Do not repeat information across tables. Place each point in only one of the three buckets.
             NOTE: Include only the most relevant and most important points related only to green initiatives and climate change, do not include other irrelevant stuff please!
             Do not make up any information. If the report lacks information in these tables, keep it blank. Format the response in a way that is easy to input into an SQL database, using a clear structure with fields for category, initiative, and details. 
-            DO NOT give any additional details other than just the JSON object, to be clear JSON object only with no additional info/text for context`; 
-            
+            DO NOT give any additional details other than just the JSON object, to be clear JSON object only with no additional info/text for context`;
+
             const answerResponse = await fetch(serverURL + "/api/chat", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
@@ -574,7 +574,7 @@ DO NOT give any additional details other than just the JSON object, to be clear 
                 const actions = {
                   companyName: companyName,
                   report_year: reportYear,
-                  companyData: action.Action// Send each action as an array with a single element
+                  companyData: action.Action, // Send each action as an array with a single element
                 };
 
                 // Making the API call for each action
@@ -608,7 +608,7 @@ DO NOT give any additional details other than just the JSON object, to be clear 
                 const progress = {
                   companyName: companyName,
                   report_year: reportYear,
-                  companyData: item.Progress_Description // Send each action as an array with a single element
+                  companyData: item.Progress_Description, // Send each action as an array with a single element
                 };
 
                 // Making the API call for each action
@@ -645,7 +645,7 @@ DO NOT give any additional details other than just the JSON object, to be clear 
                 const targets = {
                   companyName: companyName,
                   report_year: reportYear,
-                  companyData: item.Target_Description// Send each action as an array with a single element
+                  companyData: item.Target_Description, // Send each action as an array with a single element
                 };
 
                 // Making the API call for each action
@@ -742,8 +742,8 @@ DO NOT give any additional details other than just the JSON object, to be clear 
             Do not repeat information across tables. Place each point in only one of the three buckets.
             NOTE: Include only the most relevant and most important points related only to green initiatives and climate change, do not include other irrelevant stuff please!
             Do not make up any information. If the report lacks information in these tables, keep it blank. Format the response in a way that is easy to input into an SQL database, using a clear structure with fields for category, initiative, and details. 
-            DO NOT give any additional details other than just the JSON object, to be clear JSON object only with no additional info/text for context`; 
-   
+            DO NOT give any additional details other than just the JSON object, to be clear JSON object only with no additional info/text for context`;
+
             const answerResponse = await fetch(serverURL + "/api/chat", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
@@ -775,7 +775,7 @@ DO NOT give any additional details other than just the JSON object, to be clear 
                 const actions = {
                   companyName: "Eni",
                   report_year: reportYear,
-                  companyData: action.Action// Send each action as an array with a single element
+                  companyData: action.Action, // Send each action as an array with a single element
                 };
 
                 // Making the API call for each action
@@ -809,7 +809,7 @@ DO NOT give any additional details other than just the JSON object, to be clear 
                 const progress = {
                   companyName: "Eni",
                   report_year: reportYear,
-                  companyData: item.Progress_Description // Send each action as an array with a single element
+                  companyData: item.Progress_Description, // Send each action as an array with a single element
                 };
 
                 // Making the API call for each action
@@ -846,7 +846,7 @@ DO NOT give any additional details other than just the JSON object, to be clear 
                 const targets = {
                   companyName: "Eni",
                   report_year: reportYear,
-                  companyData: item.Target_Description// Send each action as an array with a single element
+                  companyData: item.Target_Description, // Send each action as an array with a single element
                 };
 
                 // Making the API call for each action
@@ -943,8 +943,8 @@ DO NOT give any additional details other than just the JSON object, to be clear 
             Do not repeat information across tables. Place each point in only one of the three buckets.
             NOTE: Include only the most relevant and most important points related only to green initiatives and climate change, do not include other irrelevant stuff please!
             Do not make up any information. If the report lacks information in these tables, keep it blank. Format the response in a way that is easy to input into an SQL database, using a clear structure with fields for category, initiative, and details. 
-            DO NOT give any additional details other than just the JSON object, to be clear JSON object only with no additional info/text for context`; 
-   
+            DO NOT give any additional details other than just the JSON object, to be clear JSON object only with no additional info/text for context`;
+
             const answerResponse = await fetch(serverURL + "/api/chat", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
@@ -972,15 +972,15 @@ DO NOT give any additional details other than just the JSON object, to be clear 
               const progressArray = parsedAnswer.Progress;
               const targetsArray = parsedAnswer.Targets; // Extracting Actions array
 
-              console.log(targetsArray)
-              console.log(actionsArray)
-              console.log(progressArray)
+              console.log(targetsArray);
+              console.log(actionsArray);
+              console.log(progressArray);
 
               for (const action of actionsArray) {
                 const actions = {
                   companyName: companyName,
                   report_year: reportYear,
-                  companyData: action.Action// Send each action as an array with a single element
+                  companyData: action.Action, // Send each action as an array with a single element
                 };
 
                 // Making the API call for each action
@@ -1014,7 +1014,7 @@ DO NOT give any additional details other than just the JSON object, to be clear 
                 const progress = {
                   companyName: companyName,
                   report_year: reportYear,
-                  companyData: item.Progress_Description // Send each action as an array with a single element
+                  companyData: item.Progress_Description, // Send each action as an array with a single element
                 };
 
                 // Making the API call for each action
@@ -1051,7 +1051,7 @@ DO NOT give any additional details other than just the JSON object, to be clear 
                 const targets = {
                   companyName: companyName,
                   report_year: reportYear,
-                  companyData: item.Target_Description// Send each action as an array with a single element
+                  companyData: item.Target_Description, // Send each action as an array with a single element
                 };
 
                 // Making the API call for each action
@@ -1149,8 +1149,8 @@ DO NOT give any additional details other than just the JSON object, to be clear 
             Do not repeat information across tables. Place each point in only one of the three buckets.
             NOTE: Include only the most relevant and most important points related only to green initiatives and climate change, do not include other irrelevant stuff please!
             Do not make up any information. If the report lacks information in these tables, keep it blank. Format the response in a way that is easy to input into an SQL database, using a clear structure with fields for category, initiative, and details. 
-            DO NOT give any additional details other than just the JSON object, to be clear JSON object only with no additional info/text for context`; 
-   
+            DO NOT give any additional details other than just the JSON object, to be clear JSON object only with no additional info/text for context`;
+
             const answerResponse = await fetch(serverURL + "/api/chat", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
@@ -1182,7 +1182,7 @@ DO NOT give any additional details other than just the JSON object, to be clear 
                 const actions = {
                   companyName: companyName,
                   report_year: reportYear,
-                  companyData: action.Action// Send each action as an array with a single element
+                  companyData: action.Action, // Send each action as an array with a single element
                 };
 
                 // Making the API call for each action
@@ -1216,7 +1216,7 @@ DO NOT give any additional details other than just the JSON object, to be clear 
                 const progress = {
                   companyName: companyName,
                   report_year: reportYear,
-                  companyData: item.Progress_Description // Send each action as an array with a single element
+                  companyData: item.Progress_Description, // Send each action as an array with a single element
                 };
 
                 // Making the API call for each action
@@ -1253,7 +1253,7 @@ DO NOT give any additional details other than just the JSON object, to be clear 
                 const targets = {
                   companyName: companyName,
                   report_year: reportYear,
-                  companyData: item.Target_Description// Send each action as an array with a single element
+                  companyData: item.Target_Description, // Send each action as an array with a single element
                 };
 
                 // Making the API call for each action
@@ -1351,8 +1351,8 @@ DO NOT give any additional details other than just the JSON object, to be clear 
             Do not repeat information across tables. Place each point in only one of the three buckets.
             NOTE: Include only the most relevant and most important points related only to green initiatives and climate change, do not include other irrelevant stuff please!
             Do not make up any information. If the report lacks information in these tables, keep it blank. Format the response in a way that is easy to input into an SQL database, using a clear structure with fields for category, initiative, and details. 
-            DO NOT give any additional details other than just the JSON object, to be clear JSON object only with no additional info/text for context`; 
-   
+            DO NOT give any additional details other than just the JSON object, to be clear JSON object only with no additional info/text for context`;
+
             const answerResponse = await fetch(serverURL + "/api/chat", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
@@ -1384,7 +1384,7 @@ DO NOT give any additional details other than just the JSON object, to be clear 
                 const actions = {
                   companyName: companyName,
                   report_year: reportYear,
-                  companyData: action.Action// Send each action as an array with a single element
+                  companyData: action.Action, // Send each action as an array with a single element
                 };
 
                 // Making the API call for each action
@@ -1418,7 +1418,7 @@ DO NOT give any additional details other than just the JSON object, to be clear 
                 const progress = {
                   companyName: companyName,
                   report_year: reportYear,
-                  companyData: item.Progress_Description // Send each action as an array with a single element
+                  companyData: item.Progress_Description, // Send each action as an array with a single element
                 };
 
                 // Making the API call for each action
@@ -1455,7 +1455,7 @@ DO NOT give any additional details other than just the JSON object, to be clear 
                 const targets = {
                   companyName: companyName,
                   report_year: reportYear,
-                  companyData: item.Target_Description// Send each action as an array with a single element
+                  companyData: item.Target_Description, // Send each action as an array with a single element
                 };
 
                 // Making the API call for each action
@@ -1496,7 +1496,7 @@ DO NOT give any additional details other than just the JSON object, to be clear 
         try {
           let extractedMarkdown = "";
           // Step 1: Call /api/ocr to get the extracted markdown
-          for (let page = 29 ; page <= 31; page++) {
+          for (let page = 29; page <= 31; page++) {
             const ocrResponse = await fetch(serverURL + "/api/ocr", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
@@ -1552,8 +1552,8 @@ DO NOT give any additional details other than just the JSON object, to be clear 
             Do not repeat information across tables. Place each point in only one of the three buckets.
             NOTE: Include only the most relevant and most important points related only to green initiatives and climate change, do not include other irrelevant stuff please!
             Do not make up any information. If the report lacks information in these tables, keep it blank. Format the response in a way that is easy to input into an SQL database, using a clear structure with fields for category, initiative, and details. 
-            DO NOT give any additional details other than just the JSON object, to be clear JSON object only with no additional info/text for context`; 
-   
+            DO NOT give any additional details other than just the JSON object, to be clear JSON object only with no additional info/text for context`;
+
             const answerResponse = await fetch(serverURL + "/api/chat", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
@@ -1585,7 +1585,7 @@ DO NOT give any additional details other than just the JSON object, to be clear 
                 const actions = {
                   companyName: "TE",
                   report_year: reportYear,
-                  companyData: action.Action// Send each action as an array with a single element
+                  companyData: action.Action, // Send each action as an array with a single element
                 };
 
                 // Making the API call for each action
@@ -1619,7 +1619,7 @@ DO NOT give any additional details other than just the JSON object, to be clear 
                 const progress = {
                   companyName: "TE",
                   report_year: reportYear,
-                  companyData: item.Progress_Description // Send each action as an array with a single element
+                  companyData: item.Progress_Description, // Send each action as an array with a single element
                 };
 
                 // Making the API call for each action
@@ -1656,7 +1656,7 @@ DO NOT give any additional details other than just the JSON object, to be clear 
                 const targets = {
                   companyName: "TE",
                   report_year: reportYear,
-                  companyData: item.Target_Description// Send each action as an array with a single element
+                  companyData: item.Target_Description, // Send each action as an array with a single element
                 };
 
                 // Making the API call for each action
@@ -1694,7 +1694,10 @@ DO NOT give any additional details other than just the JSON object, to be clear 
         }
       }
 
-      if (companyName === "Shell" && reportName === "Achieving Net Zero Emissions Report") {
+      if (
+        companyName === "Shell" &&
+        reportName === "Achieving Net Zero Emissions Report"
+      ) {
         try {
           let extractedMarkdown = "";
           for (let page = 0; page <= 17; page++) {
@@ -1753,8 +1756,8 @@ DO NOT give any additional details other than just the JSON object, to be clear 
             Do not repeat information across tables. Place each point in only one of the three buckets.
             NOTE: Include only the most relevant and most important points related only to green initiatives and climate change, do not include other irrelevant stuff please!
             Do not make up any information. If the report lacks information in these tables, keep it blank. Format the response in a way that is easy to input into an SQL database, using a clear structure with fields for category, initiative, and details. 
-            DO NOT give any additional details other than just the JSON object, to be clear JSON object only with no additional info/text for context`; 
-               const answerResponse = await fetch(serverURL + "/api/chat", {
+            DO NOT give any additional details other than just the JSON object, to be clear JSON object only with no additional info/text for context`;
+            const answerResponse = await fetch(serverURL + "/api/chat", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
@@ -1785,7 +1788,7 @@ DO NOT give any additional details other than just the JSON object, to be clear 
                 const actions = {
                   companyName: companyName,
                   report_year: reportYear,
-                  companyData: action.Action// Send each action as an array with a single element
+                  companyData: action.Action, // Send each action as an array with a single element
                 };
 
                 // Making the API call for each action
@@ -1819,7 +1822,7 @@ DO NOT give any additional details other than just the JSON object, to be clear 
                 const progress = {
                   companyName: companyName,
                   report_year: reportYear,
-                  companyData: item.Progress_Description // Send each action as an array with a single element
+                  companyData: item.Progress_Description, // Send each action as an array with a single element
                 };
 
                 // Making the API call for each action
@@ -1856,7 +1859,7 @@ DO NOT give any additional details other than just the JSON object, to be clear 
                 const targets = {
                   companyName: companyName,
                   report_year: reportYear,
-                  companyData: item.Targets_Description// Send each action as an array with a single element
+                  companyData: item.Targets_Description, // Send each action as an array with a single element
                 };
 
                 // Making the API call for each action
@@ -1953,8 +1956,8 @@ DO NOT give any additional details other than just the JSON object, to be clear 
             Do not repeat information across tables. Place each point in only one of the three buckets.
             NOTE: Include only the most relevant and most important points related only to green initiatives and climate change, do not include other irrelevant stuff please!
             Do not make up any information. If the report lacks information in these tables, keep it blank. Format the response in a way that is easy to input into an SQL database, using a clear structure with fields for category, initiative, and details. 
-            DO NOT give any additional details other than just the JSON object, to be clear JSON object only with no additional info/text for context`; 
-   
+            DO NOT give any additional details other than just the JSON object, to be clear JSON object only with no additional info/text for context`;
+
             const answerResponse = await fetch(serverURL + "/api/chat", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
@@ -1986,7 +1989,7 @@ DO NOT give any additional details other than just the JSON object, to be clear 
                 const actions = {
                   companyName: companyName,
                   report_year: reportYear,
-                  companyData: action.Action// Send each action as an array with a single element
+                  companyData: action.Action, // Send each action as an array with a single element
                 };
 
                 // Making the API call for each action
@@ -2020,7 +2023,7 @@ DO NOT give any additional details other than just the JSON object, to be clear 
                 const progress = {
                   companyName: companyName,
                   report_year: reportYear,
-                  companyData: item.Progress_Description // Send each action as an array with a single element
+                  companyData: item.Progress_Description, // Send each action as an array with a single element
                 };
 
                 // Making the API call for each action
@@ -2057,7 +2060,7 @@ DO NOT give any additional details other than just the JSON object, to be clear 
                 const targets = {
                   companyName: companyName,
                   report_year: reportYear,
-                  companyData: item.Target_Description// Send each action as an array with a single element
+                  companyData: item.Target_Description, // Send each action as an array with a single element
                 };
 
                 // Making the API call for each action
@@ -2097,6 +2100,7 @@ DO NOT give any additional details other than just the JSON object, to be clear 
 
       if (submitData.success) {
         alert("Document successfully added to the system!");
+
         // Reset form values after submission
         setCompanyName("");
         setReportYear("");
@@ -2105,8 +2109,11 @@ DO NOT give any additional details other than just the JSON object, to be clear 
         setFile(null);
         setOpenDialog(false);
       } else {
-        alert("An error occurred while adding the document. Please try again.");
+        console.error(
+          "An error occurred while adding the document. Please try again."
+        );
       }
+      handleDialogClose();
     }
   };
 
@@ -2349,50 +2356,54 @@ DO NOT give any additional details other than just the JSON object, to be clear 
       <Dialog open={openDialog} onClose={handleDialogClose}>
         <DialogTitle>Add New File</DialogTitle>
         <DialogContent>
-        <FormControl fullWidth style={{ marginBottom: "1rem" }}>
-        <InputLabel id="company-name-label">Company Name</InputLabel>
-        <Select
-          labelId="company-name-label"
-          value={companyName}
-          onChange={(e) => {
-            setCompanyName(e.target.value);
-            setReportName(""); // Reset Report Name when Company changes
-          }}
-        >
-          <MenuItem value="" disabled>
-            Select a company
-          </MenuItem>
-          {Object.keys(reportNamesByCompany).map((company) => (
-            <MenuItem key={company} value={company}>
-              {company}
-            </MenuItem>
-          ))}
-        </Select>
-      </FormControl>
-      {companyName && (
-          <>
-            <TextField
-              label="Report Year"
-              fullWidth
-              style={{ marginBottom: "1rem" }}
-              value={reportYear}
-              onChange={(e) => setReportYear(e.target.value)}
-            />
-            
-            <FormControl fullWidth style={{ marginBottom: "1rem" }}>
-              <InputLabel id="report-name-label">Report Name</InputLabel>
-              <Select
-                labelId="report-name-label"
-                value={reportName}
-                onChange={(e) => setReportName(e.target.value)}
-              >
-                <MenuItem value="" disabled>Select a report type</MenuItem>
-                {reportNamesByCompany[companyName].map((report) => (
-                  <MenuItem key={report} value={report}>{report}</MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </>
+          <FormControl fullWidth style={{ marginBottom: "1rem" }}>
+            <InputLabel id="company-name-label">Company Name</InputLabel>
+            <Select
+              labelId="company-name-label"
+              value={companyName}
+              onChange={(e) => {
+                setCompanyName(e.target.value);
+                setReportName(""); // Reset Report Name when Company changes
+              }}
+            >
+              <MenuItem value="" disabled>
+                Select a company
+              </MenuItem>
+              {Object.keys(reportNamesByCompany).map((company) => (
+                <MenuItem key={company} value={company}>
+                  {company}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          {companyName && (
+            <>
+              <TextField
+                label="Report Year"
+                fullWidth
+                style={{ marginBottom: "1rem" }}
+                value={reportYear}
+                onChange={(e) => setReportYear(e.target.value)}
+              />
+
+              <FormControl fullWidth style={{ marginBottom: "1rem" }}>
+                <InputLabel id="report-name-label">Report Name</InputLabel>
+                <Select
+                  labelId="report-name-label"
+                  value={reportName}
+                  onChange={(e) => setReportName(e.target.value)}
+                >
+                  <MenuItem value="" disabled>
+                    Select a report type
+                  </MenuItem>
+                  {reportNamesByCompany[companyName].map((report) => (
+                    <MenuItem key={report} value={report}>
+                      {report}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </>
           )}
           <TextField
             label="Document URL"
@@ -2427,7 +2438,7 @@ DO NOT give any additional details other than just the JSON object, to be clear 
               }}
             ></iframe>
           )}
-          /* Download PDF Button */
+
           {fileURL && (
             <a href={fileURL} download="uploaded-file.pdf">
               <button
